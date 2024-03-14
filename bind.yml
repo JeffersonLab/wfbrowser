@@ -1,0 +1,28 @@
+services:
+  mariadb:
+    extends:
+      file: build.yml
+      service: mariadb
+
+  keycloak:
+    extends:
+      file: build.yml
+      service: keycloak
+
+  puppet:
+    extends:
+      file: docker-compose.yml
+      service: puppet
+
+  mailhog:
+    extends:
+      file: build.yml
+      service: mailhog
+
+  wfb:
+    extends:
+      file: build.yml
+      service: wfb
+    volumes:
+      - ./docker/wildfly/standalone/configuration/:/opt/jboss/wildfly/standalone/configuration/
+      - ./docker/wildfly/standalone/deployments/:/opt/jboss/wildfly/standalone/deployments/

@@ -1,0 +1,3 @@
+services:
+  wfb:
+    image: jeffersonlab/wfbrowser:2.0.0

@@ -1,0 +1,28 @@
+services:
+  mariadb:
+    extends:
+      file: docker-compose.yml
+      service: mariadb
+
+  keycloak:
+    extends:
+      file: docker-compose.yml
+      service: keycloak
+
+  puppet:
+    extends:
+      file: docker-compose.yml
+      service: puppet
+
+  mailhog:
+    extends:
+      file: docker-compose.yml
+      service: mailhog
+
+  wfb:
+    extends:
+      file: docker-compose.yml
+      service: wfb
+    build:
+      context: .
+      dockerfile: Dockerfile

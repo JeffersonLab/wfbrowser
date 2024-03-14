@@ -1,0 +1,58 @@
+services:
+
+  mariadb:
+    image: mariadb:10.4.6
+    hostname: mariadb
+    container_name: mariadb
+#    ports:
+#      - "3306:3306"
+    environment:
+      # Looks like the mariadb image should take MARIADB_* or MYSQL_*, but I ran into problems wiouth MYSQL_
+#      MYSQL_DATABASE: "waveforms"
+      MYSQL_ROOT_PASSWORD: "password"
+    volumes:
+      - ./docker/mariadb/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  keycloak:
+#    image: quay.io/keycloak/keycloak:21.0.1
+    image: quay.io/keycloak/keycloak:20.0.2
+    hostname: keycloak
+    container_name: keycloak
+    ports:
+      - "8081:8080"
+      - "9991:9990"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # TLDR; You can't logout unless you set frontend to be your development hostname.
+      # If localhost, then rfd server tries to connect to itself and finds no one listening.  Need to expose
+      # keycloak port, and use dev system hostname to direct traffic to the proper system/port
+      KEYCLOAK_FRONTEND_HOSTNAME: 'localhost'
+      KEYCLOAK_FRONTEND_PORT: '8081'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080'
+      KEYCLOAK_HOME: '/opt/keycloak'
+      KEYCLOAK_REALM: 'test-realm'
+      KEYCLOAK_RESOURCE: 'wfbrowser'
+      KEYCLOAK_SECRET: 'MA7mLvPXLAA2WN0eByHi6W2raPoVWbxq'
+      WFBADM_NAME: 'wfbadm'
+      WFBADM_SECRET: 'Hi6W2MA7mLvrPXLAaPoVAByWb2WN0exx'
+      WFBADM_POST_ROLE: 'wfb_eventpost'
+      WFBADM_ADMIN_ROLE: 'wfb_admin'
+    volumes:
+      - ./docker/keycloak:/scripts
+    entrypoint: /scripts/docker-entrypoint.sh
+
+  puppet:
+    image: slominskir/puppet-show:2.1.1
+    hostname: puppet
+    container_name: puppet
+    ports:
+      - "3000:3000"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    hostname: mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
