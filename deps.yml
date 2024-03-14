@@ -36,8 +36,8 @@ services:
       KEYCLOAK_SECRET: 'MA7mLvPXLAA2WN0eByHi6W2raPoVWbxq'
       WFBADM_NAME: 'wfbadm'
       WFBADM_SECRET: 'Hi6W2MA7mLvrPXLAaPoVAByWb2WN0exx'
-      WFBADM_POST_ROLE: 'wfb_eventpost'
-      WFBADM_ADMIN_ROLE: 'wfb_admin'
+      WFB_POST_ROLE: 'wfb_eventpost'
+      WFB_ADMIN_ROLE: 'wfb_admin'
     volumes:
       - ./docker/keycloak:/scripts
     entrypoint: /scripts/docker-entrypoint.sh
