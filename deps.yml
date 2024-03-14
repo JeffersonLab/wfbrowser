@@ -4,17 +4,14 @@ services:
     image: mariadb:10.4.6
     hostname: mariadb
     container_name: mariadb
-#    ports:
-#      - "3306:3306"
+    # mariadb image apparently exports its own ports?
     environment:
-      # Looks like the mariadb image should take MARIADB_* or MYSQL_*, but I ran into problems wiouth MYSQL_
-#      MYSQL_DATABASE: "waveforms"
+      # Looks like the mariadb image should take MARIADB_* or MYSQL_*, but I ran into problems without MYSQL_
       MYSQL_ROOT_PASSWORD: "password"
     volumes:
       - ./docker/mariadb/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 
   keycloak:
-#    image: quay.io/keycloak/keycloak:21.0.1
     image: quay.io/keycloak/keycloak:20.0.2
     hostname: keycloak
     container_name: keycloak
