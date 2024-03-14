@@ -20,7 +20,13 @@ public class PrincipalTransformFilter implements Filter {
             HttpServletRequest req = (HttpServletRequest) request;
             String rawName = req.getRemoteUser();
             if (rawName != null) {
-                String transformedName = rawName.split(":")[2];
+                String[] tokens = rawName.split(":");
+                // Service account names appear to have only the name service-account-<keycloak_client_name>
+                // Others have realm, etc. identifiers separated by colons
+                String transformedName = tokens[0];
+                if (tokens.length > 1) {
+                    transformedName = tokens[2];
+                }
                 request.setAttribute("simpleRemoteUser", transformedName);
             }
         }
