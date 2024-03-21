@@ -52,8 +52,10 @@ public class SeriesUpdateAjax extends HttpServlet {
         Double yMin, yMax;
 
         try {
-            yMin = request.getParameter("ymin") == "" ? null : Double.valueOf(request.getParameter("ymin"));
-            yMax = request.getParameter("ymax") == "" ? null : Double.valueOf(request.getParameter("ymax"));
+            String min = request.getParameter("ymin");
+            String max = request.getParameter("ymax");
+            yMin = min == null || min.isEmpty() ? null : Double.valueOf(min);
+            yMax = max == null || max.isEmpty() ? null : Double.valueOf(max);
         } catch (NumberFormatException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType("application/json");
