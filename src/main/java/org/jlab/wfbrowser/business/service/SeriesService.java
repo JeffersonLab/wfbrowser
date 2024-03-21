@@ -160,10 +160,6 @@ public class SeriesService {
             }
             pstmt.setInt(8, seriesId);
 
-            System.out.println("id=" + seriesId);
-            System.out.println("yMin=" + yMin);
-            System.out.println("yMax=" + yMax);
-
             int n = pstmt.executeUpdate();
             if (n < 1) {
                 conn.rollback();
