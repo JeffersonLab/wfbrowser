@@ -868,6 +868,8 @@ $(function () {
     var timeLineWidth = window.getComputedStyle(timelineDiv).width;
     timelineDiv.setAttribute("style", "width:" + timeLineWidth + 1);
     timelineDiv.setAttribute("style", "");
+    // Sometimes on firefox the timeline comes back with visibility: hidden.  Not sure why, but this fixes it.
+    timelineDiv.children[0].setAttribute("style", "visibility:''")
 
     jlab.wfb.timeline.setOptions({'zoomKey': 'ctrlKey'});
 
