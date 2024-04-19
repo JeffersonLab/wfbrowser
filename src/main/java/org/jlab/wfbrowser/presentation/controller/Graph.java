@@ -266,11 +266,17 @@ public class Graph extends HttpServlet {
             }
             if (classificationOptions != null) {
                 for (String classification : classificationOptions) {
+                    if (classification == null || classification.isEmpty()) {
+                        continue;
+                    }
                     classificationMap.put(classification, false);
                 }
             }
             if (classificationSelections != null) {
                 for (String classification : classificationSelections) {
+                    if (classification == null || classification.isEmpty()) {
+                        continue;
+                    }
                     classificationMap.put(classification, true);
                 }
             }
@@ -325,6 +331,9 @@ public class Graph extends HttpServlet {
                 break;
             case "acclrm":
                 systemDisplay = "Accelerometer";
+                break;
+            case "bpm":
+                systemDisplay = "BPM";
                 break;
             default:
                 throw new IllegalArgumentException("No display name defined for system -" + system);
