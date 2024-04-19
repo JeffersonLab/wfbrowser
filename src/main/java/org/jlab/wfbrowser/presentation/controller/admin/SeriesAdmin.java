@@ -7,6 +7,7 @@ package org.jlab.wfbrowser.presentation.controller.admin;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +49,7 @@ public class SeriesAdmin extends HttpServlet {
             Logger.getLogger(SeriesAdmin.class.getName()).log(Level.SEVERE, null, ex);
             throw new ServletException(ex);
         }
+        seriesList.sort((Comparator.comparing(Series::getSystem).thenComparing(Series::getName)));
         request.setAttribute("seriesList", seriesList);
         request.getRequestDispatcher("/WEB-INF/views/admin/series.jsp").forward(request, response);
     }
