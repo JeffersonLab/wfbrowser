@@ -734,7 +734,6 @@ public class EventService {
                     // Get the mapping
                     Map<String, List<Series>> waveformToSeries = new HashMap<>();
                     pstmt.setLong(1, e.getEventId());
-                    pstmt.setString(2, e.getSystem());
                     rs = pstmt.executeQuery();
                     while (rs.next()) {
                         String waveformName = rs.getString("waveform_name");
