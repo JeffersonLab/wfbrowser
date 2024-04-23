@@ -56,6 +56,22 @@
                 font-size: 80%;
                 right: -10px;
             }
+            .visibility-dialog {
+                position: absolute;
+                z-index:3;
+                top: 110%;
+                left: 0px;
+                width: 20em;
+                max-height: 200px;
+                overflow-y: scroll;
+                background-color: mintcream;
+                box-shadow: 8px 8px 8px #979797;
+                border-radius: 8px 8px 8px 8px;
+                padding: 4px;
+                border: 1px solid black;
+                text-align: left;
+                font-size: 80%;
+            }
 
             .secondary-nav-horizontal {
                 /*border: 1px solid black;*/
@@ -113,14 +129,32 @@
                 </div>
                 <nav class="secondary-nav-horizontal">
                     System View:
-                    <ul>
-                        <li${'rf' eq requestScope.system ? ' class="current-primary"' : ''}>
-                            <a href="${pageContext.request.contextPath}/graph?system=rf&amp;begin=&amp;end=">RF</a>
-                        </li>  
-                        <li${'acclrm' eq requestScope.system ? ' class="current-primary"' : ''}>
-                            <a href="${pageContext.request.contextPath}/graph?system=acclrm&amp;begin=&amp;end=">Accelerometer</a>
-                        </li>  
-                    </ul>
+                    <select name="system-selector">
+                        <c:choose>
+                            <c:when test="${system=='rf'}">
+                                <option value="rf" selected="selected">RF</option>
+                            </c:when>
+                            <c:otherwise>
+                                <option value="rf">RF</option>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test="${system=='acclrm'}">
+                                <option value="acclrm" selected="selected">Accelerometer</option>
+                            </c:when>
+                            <c:otherwise>
+                                <option value="acclrm">Accelerometer</option>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test="${system=='bpm'}">
+                                <option value="bpm" selected="selected">BPM</option>
+                            </c:when>
+                            <c:otherwise>
+                                <option value="bpm">BPM</option>
+                            </c:otherwise>
+                        </c:choose>
+                    </select>
                 </nav>
             </div>
             <div id="timeline-container"></div>
@@ -151,21 +185,21 @@
                                 </div>
                             </li>
                         </ul>
+                        <c:if test="${requestScope.classificationMap.size() > 0}">
+                            <ul class="key-value-list">
+                                <li>
+                                    <div class="li-key"><label for="classification" title="Include only events with the following classification(s).  Empty implies no filter">Classification</label></div>
+                                    <div class="li-value">
+                                        <select id="classification-selector" name="classification" multiple>
+                                            <c:forEach var="cls" items="${requestScope.classificationMap}">
+                                                <option value="${cls.key}" label="${cls.key}" <c:if test="${cls.value}">selected</c:if>>${cls.key}</option>
+                                            </c:forEach>
+                                        </select>
+                                    </div>
+                                </li>
+                            </ul>
+                        </c:if>
                         <c:choose>
-                            <c:when test="${requestScope.system == 'acclrm'}">
-                                <ul class="key-value-list">
-                                    <li>
-                                        <div class="li-key"><label for="classification" title="Include only events with the following classification(s).  Emply implies no filter">Classification</label></div>
-                                        <div class="li-value">
-                                            <select id="classification-selector" name="classification" multiple>
-                                                <c:forEach var="cls" items="${requestScope.classificationMap}">
-                                                    <option value="${cls.key}" label="${cls.key}" <c:if test="${cls.value}">selected</c:if>>${cls.key}</option>
-                                                </c:forEach>
-                                            </select>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </c:when>
                             <c:when test="${requestScope.system == 'rf'}">
                                 <ul class="key-value-list">
                                     <li>
@@ -213,21 +247,29 @@
         </section>
         <script>
             var jlab = jlab || {};
-            jlab.wfb = jlab.wfb || {}
-            ;
-                    jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-                    jlab.wfb.locationToGroupMap = new Map([<c:forEach var="index" begin="0" end="${fn:length(locationSelections)-1}">['${locationSelections.get(index)}', '${index}']<c:if test="${index != (fn:length(locationSelections)-1)}">,</c:if></c:forEach>]);
+            jlab.wfb = jlab.wfb || {};
+            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.locationToGroupMap = new Map([<c:forEach var="index" begin="0" end="${fn:length(locationSelections)-1}">['${locationSelections.get(index)}', '${index}']<c:if test="${index != (fn:length(locationSelections)-1)}">,</c:if></c:forEach>]);
             jlab.wfb.begin = "${requestScope.begin}";
             jlab.wfb.end = "${requestScope.end}";
             jlab.wfb.system = "${requestScope.system}";
             jlab.wfb.eventArray = ${requestScope.eventListJson};
             jlab.wfb.eventArray = jlab.wfb.eventArray.events;
             jlab.wfb.minCF = "${requestScope.minCF}";
-            jlab.wfb.currentEvent = ${requestScope.currentEvent} || {}
-            ;
-                    jlab.wfb.seriesSelections = [<c:forEach var="series" items="${seriesSelections}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-                    jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'${seriesSet}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-                    jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-                </script>
-    </jsp:body>  
+            jlab.wfb.currentEvent = ${requestScope.currentEvent} || {};
+            jlab.wfb.seriesSelections = [<c:forEach var="series" items="${seriesSelections}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'${seriesSet}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+
+            jlab.wfb.classificationMap = new Map();
+            <c:forEach var="classification" items="${requestScope.classificationMap}">
+                jlab.wfb.classificationMap.set("${classification.key}", ${classification.value});
+            </c:forEach>
+
+            // Attach an event listener to make the system selector update the graph settings.
+            document.querySelectorAll("[name=system-selector]")[0].addEventListener('change', function() {
+                window.location = "${pageContext.request.contextPath}/graph?system=" + this.value;
+            });
+        </script>
+    </jsp:body>
 </t:page>

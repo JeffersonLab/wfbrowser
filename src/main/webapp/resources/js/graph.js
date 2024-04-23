@@ -19,7 +19,10 @@ jlab.wfb.timeline = null;
  * This map is used to apply a consistent set of colors based on a dygraph ID.  dygraph IDs are 1 indexed, so id-1 -> color
  * @type Array
  */
-jlab.wfb.dygraphIdToColorArray = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#444444', '#a65628', '#e077ae'];
+jlab.wfb.dygraphIdToColorArray = ["#7c1158", '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#999999', '#a65628', '#e077ff',
+     "#555555", '#e41a1c', "#4421af", "#1a53ff", "#0d88e6", "#00b7c7", "#5ad45a", "#8be04e", "#ebdc78",
+     "#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#000aff", "#b3d4ff", "#00bfa0",
+     "#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"];
 
 
 /**
@@ -198,6 +201,11 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
     for (var i = 0; i < event.waveforms.length; i++) {
         for (var j = 0; j < event.waveforms[i].series.length; j++) {
             if (event.waveforms[i].series[j].name === series) {
+                if (dygraphIds.includes(event.waveforms[i].dygraphId)) {
+                    window.console && console.log("Plot " + series + ": WARNING waveform " +
+                        event.waveforms[i].waveformName + " as it has a duplicate ID '" +
+                        event.waveforms[i].dygraphId + "'");
+                }
                 data.push(event.waveforms[i].dataPoints);
                 labels.push(event.waveforms[i].dygraphLabel);
                 dygraphIds.push(event.waveforms[i].dygraphId);
@@ -230,7 +238,7 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
     // Set up colors so that they are unique to the dygraphId (which maps to cavity number)
     var colors = [];
     for (var i = 0; i < dygraphIds.length; i++) {
-        colors.push(jlab.wfb.dygraphIdToColorArray[dygraphIds[i] - 1]);
+        colors.push(jlab.wfb.dygraphIdToColorArray[dygraphIds[i]]);
     }
 
     // We have to transpose the data array here since dygraphs wants it as though it was the rows a of a CSV file.
@@ -514,8 +522,8 @@ jlab.wfb.makeGraphs = function (event, $graphPanel, series) {
     var date = jlab.wfb.convertUTCDateStringToLocalDate(event.datetime_utc);
     var headerHtml = "<div class='graph-panel-header'>" +
         "<div class='graph-panel-title-wrapper'><div class='graph-panel-title'></div></div>" +
-        "<div class='graph-panel-date-wrapper'><span class='graph-panel-visibility-controls'><fieldset><legend>Visibility</legend></fieldset></span><span class='graph-panel-prev-controls'></span>" +
-        "<span class='graph-panel-date'></span>" +
+        "<div class='graph-panel-date-wrapper'><span class='graph-panel-visibility-controls'></span>" +
+        "<span class='graph-panel-prev-controls'></span><span class='graph-panel-date'></span>" +
         "<span class='graph-panel-next-controls'></span><span class='graph-panel-action-controls'><button class='download'>Download</button></span></div>";
     $graphPanel.prepend(headerHtml);
 
@@ -532,15 +540,16 @@ jlab.wfb.makeGraphs = function (event, $graphPanel, series) {
     var checkBoxNum = 0;
     var allVisibility = document.createElement("button");
     allVisibility.appendChild(document.createTextNode("All"));
-    allVisibility.setAttribute("style", "width:3em; font-size: 10px; margin: 0px 2px 0px 10px; vertical-align: top;");
+    allVisibility.setAttribute("style", "width:3em; font-size: 10px; margin: 0px 0px 2px 2px; vertical-align: top;");
     var noneVisibility = document.createElement("button");
     noneVisibility.appendChild(document.createTextNode("None"));
-    noneVisibility.setAttribute("style", "width:3em; font-size: 10px; margin: 0px 2px 0px 10px; vertical-align: top;");
+    noneVisibility.setAttribute("style", "width:3em; font-size: 10px; margin: 0px 0px 2px 2px; vertical-align: top;");
 
     var color = jlab.wfb.dygraphIdToColorArray[checkBoxNum];
 
     switch (jlab.wfb.system) {
         case "rf":
+            $("#graph-panel .graph-panel-visibility-controls").append("<fieldset><legend>Visibility</legend></fieldset>");
             dygraphLabelIdMap.forEach(function (id, label, map) {
                 // RF has 8 cavities.  It's better to leave a disabled checkbox, than throw off the alignment
                 while (id > checkBoxNum+1) {
@@ -577,7 +586,39 @@ jlab.wfb.makeGraphs = function (event, $graphPanel, series) {
             }
             $("#graph-panel .graph-panel-visibility-controls fieldset").append(noneVisibility);
             break;
+        case 'bpm':
+            $("#graph-panel .graph-panel-visibility-controls").append("<button id='visibility-menu-button' class='help'><div >Visibility<span id='visibility-menu-arrow' class='ui-icon ui-icon-triangle-1-s' style='display: inline-block; vertical-align: bottom'></span></div></button>");
+
+            let visControls = document.createElement("div");
+            visControls.hidden = true;
+            visControls.classList.add("visibility-dialog");
+            visControls.id = "visibility-menu";
+            visControls.append(document.createElement("fieldset"));
+            $("#graph-panel .graph-panel-visibility-controls").append(visControls);
+            $("#visibility-menu").prepend(noneVisibility);
+            $("#visibility-menu").prepend(allVisibility);
+
+            $("#graph-panel .graph-panel-visibility-controls .help").on("click", (function () {
+                return function () {
+                    visControls.hidden = !visControls.hidden;
+                    $("#visibility-menu-arrow").toggleClass('ui-icon-triangle-1-s')
+                    $("#visibility-menu-arrow").toggleClass('ui-icon-triangle-1-n')
+                };
+            })());
+
+            // Now roughly mimic the default behavior
+            dygraphLabelIdMap.forEach(function (id, label, map) {
+            // mapped.forEach(function (id, label, map) {
+                let forName = "cav-toggle-" + checkBoxNum;
+                let color = jlab.wfb.dygraphIdToColorArray[id];
+
+                // Give a colored line as a label.  Dygraph already does this for their labels, so just reuse their div with the color we specified earler
+                $("#graph-panel .graph-panel-visibility-controls fieldset").append('<div><input type="checkbox" id="cav-toggle-' + checkBoxNum + '" class="cavity-toggle" data-label="' + label + '" checked="checked"><label style="font-weight: bold; color: ' + color + ';" for="' + forName + '"><div class="dygraph-legend-line" style="border-bottom-color: ' + color + ';"></div>' + label + '</label></div>');
+                checkBoxNum++;
+            });
+            break;
         default:
+            $("#graph-panel .graph-panel-visibility-controls").append("<fieldset><legend>Visibility</legend></fieldset>");
             dygraphLabelIdMap.forEach(function (id, label, map) {
                if (checkBoxNum === 4) {
                     $("#graph-panel .graph-panel-visibility-controls fieldset").append("<br>");
@@ -826,7 +867,7 @@ $(function () {
     jlab.wfb.$seriesSelector.select2(select2Options);
     jlab.wfb.$seriesSetSelector.select2(select2Options);
     jlab.wfb.$locationSelector.select2(select2Options);
-    if (jlab.wfb.system === 'acclrm') {
+    if (jlab.wfb.classificationMap.size > 0) {
         jlab.wfb.$classificationSelector.select2(select2Options);
     }
     jlab.wfb.$startPicker.val(jlab.wfb.begin);
