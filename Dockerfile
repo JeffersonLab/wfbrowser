@@ -23,9 +23,12 @@ FROM ${RUN_IMAGE} as runner
 COPY --from=builder /app/docker/server/server-setup.env /
 COPY --from=builder /app/docker/app/app-setup.env /
 USER root:root
+# The app relies on the server's localtime to be the same as the timezone where the data was taken (Eastern or NewYork)
+# since the database stores them in UTC, but the disk stores them in localtime for the server that wrote the data.
 RUN chsh -s /bin/bash jboss \
     && /server-setup.sh /server-setup.env wildfly_start_and_wait \
-    && /server-setup.sh /server-setup.env config_email
+    && /server-setup.sh /server-setup.env config_email \
+    && ln -sf ../usr/share/zoneinfo/US/Eastern /etc/localtime
 RUN /app-setup.sh /app-setup.env
 USER jboss:jboss
 COPY --from=builder /app/build/libs/* /opt/jboss/wildfly/standalone/deployments
