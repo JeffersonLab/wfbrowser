@@ -1,0 +1,6 @@
+{
+  "dev":{
+    "event_url": "http://localhost:8080/wfbrowser/ajax/event",
+    "auth_url": "http://localhost:8081/realms/test-realm/protocol/openid-connect/token"
+  }
+}
