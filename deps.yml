@@ -5,6 +5,8 @@ services:
     hostname: mariadb
     container_name: mariadb
     # mariadb image apparently exports its own ports?
+    ports:
+      - "3306:3306"
     environment:
       # Looks like the mariadb image should take MARIADB_* or MYSQL_*, but I ran into problems without MYSQL_
       MYSQL_ROOT_PASSWORD: "password"
