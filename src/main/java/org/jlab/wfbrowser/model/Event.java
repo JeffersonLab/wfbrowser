@@ -75,13 +75,11 @@ public class Event implements Comparable<Event> {
     private boolean areWaveformsConsistent = true;  // If all waveforms have the same set of time offsets.  Simplifies certain data operations.
 
     private static Path setDataDir() throws IOException {
-        Properties props = new Properties();
-        try (InputStream is = Event.class.getClassLoader().getResourceAsStream("wfBrowser.properties")) {
-            if (is != null) {
-                props.load(is);
-            }
+        String dataDir = System.getenv("WFB_DATA_DIR");
+        if ( dataDir == null) {
+            dataDir = "/usr/opsdata/waveforms/data";
         }
-        return Paths.get(props.getProperty("dataDir", "/usr/opsdata/waveforms/data"));
+        return Paths.get(dataDir);
     }
 
     /**
