@@ -1,0 +1,17 @@
+## To setup the test database for local development on a Windows desktop:
+
+1. Install mariadb 10.4.*
+  - Download, unzip to user's service directory, run the bin\mysqld_install_db.exe
+  - Then you should be able to log in as root without a password
+2. Run scripts/sql/test_db/00_setup_database_complete.sql to set up the database
+  - mysql.exe -u root -p
+    > source \path\to\wfbrowser\scripts\sql\test_db\00_setup_database_complete.sql
+
+## To setup the real database that is used for interactive viewing while developing locally
+
+1. Install mariadb 10.4.* (if not already done)
+  - Download, unzip to user's service directory, run the bin\mysqld_install_db.exe
+  - Then you should be able to log in as root without a password
+2. Run scripts/sql/00_setup_database_complete.sql to set up the database
+  - mysql.exe -u root -p
+    > source \path\to\wfbrowser\scripts\sql\00_setup_database_complete.sql

@@ -1,0 +1,130 @@
+Add this datasource declaration when developing against local test mysql server.
+
+        <datasources>
+            ...
+            <datasource jndi-name="java:/jdbc/waveforms_rw" pool-name="jdbc/waveforms_rw">
+                <connection-url>jdbc:mysql://localhost:3306/waveforms</connection-url>
+                <driver>mysql</driver>
+                <pool>
+                    <min-pool-size>1</min-pool-size>
+                    <max-pool-size>8</max-pool-size>
+                    <flush-strategy>EntirePool</flush-strategy>
+                </pool>
+                <security>
+                    <user-name>root</user-name>
+                </security>
+                <validation>
+                    <check-valid-connection-sql>select 1 from dual</check-valid-connection-sql>
+                    <validate-on-match>false</validate-on-match>
+                    <background-validation>true</background-validation>
+                    <background-validation-millis>30000</background-validation-millis>
+                    <use-fast-fail>true</use-fast-fail>
+                </validation>
+                <timeout>
+                    <blocking-timeout-millis>5000</blocking-timeout-millis>
+                    <idle-timeout-minutes>5</idle-timeout-minutes>
+                    <query-timeout>30</query-timeout>
+                </timeout>
+                <statement>
+                    <prepared-statement-cache-size>10</prepared-statement-cache-size>
+                    <share-prepared-statements>true</share-prepared-statements>
+                </statement>
+            </datasource>
+        </datasources>
+
+        <subsystem xmlns="urn:jboss:domain:mail:3.0">
+            ...
+            <mail-session name="jlab" jndi-name="java:/mail/jlab" from="wildfly-sftadamclab@jlab.org">
+                <smtp-server outbound-socket-binding-ref="mail-smtp-jlab"/>
+            </mail-session>
+        </subsystem>
+
+        <socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
+            ...
+            <outbound-socket-binding name="mail-smtp-jlab">
+                <remote-destination host="smtpmail.jlab.org" port="25"/>
+            </outbound-socket-binding>
+        </socket-binding-group>
+
+
+
+Needed to install the drivers (mysql, oracle, etc).  I copied over the modules/{com, org} from my Wildfly 16 server to
+the new one.  Then used the wildfly admin console (localhost:9990) to add the mysql driver.  First had to set up the
+admin user using the add-user script.
+
+bin\add-user.bat
+a                  # Enter a to select management user
+Username: admin    # The admin user will already exist.
+b                  # Enter b to enable it.
+
+# Do it a second time to update the password to something I know
+bin\add-user.bat
+a
+admin
+a                  # Update the existing password and roles
+<password>         # Update the password
+??                 # This won't be used to connect to other servers.  I forget what the exact question was here.
+
+
+
+wfbrowser was an old app that I was porting forward.  I had to change it from using KEYCLOAK authentication method
+to use the now built in OIDC authentication method.  Then I had configure the keycloak authentication info for this app
+
+Update src/main/webapp/WEB-INF/web.xml so that the <login-config> block has the OIDC tag.
+    <login-config>
+        <auth-method>OIDC</auth-method>
+    </login-config>
+
+
+
+Then add the keycloak info for the app to the wildfly server.  I will probably need to update the secret to something
+real, but I wanted to stop the errors until I get the docker environment setup.  Then the secret and the auth-server-url
+will need to be updated to match the keycloak container info (https://keycloak:8080, and whatever random string I use
+for the secret).
+
+PS C:\Users\adamc\services\wildfly-26.1.3.Final\bin> .\jboss-cli.bat
+You are disconnected at the moment. Type 'connect' to connect to the server or 'help' for the list of supported commands.
+[disconnected /] connect
+[standalone@localhost:9990 /] batch
+[standalone@localhost:9990 / #] /subsystem=elytron-oidc-client/secure-deployment=wfbrowser.war/:add(principal-attribute="preferred_username",ssl-required=EXTERNAL,resource="wfbrowser",realm="wfbrowser",auth-server-url=http://keycloak:8080)
+[standalone@localhost:9990 / #] /subsystem=elytron-oidc-client/secure-deployment="wfbrowser.war"/credential=secret:add(secret="need-to-update")
+[standalone@localhost:9990 / #] run-batch
+The batch executed successfully
+
+[standalone@localhost:9990 /]
+Press any key to continue . . .
+
+
+
+At this point the app should start with minimal warnings.  You'll like see some stuff about OpenID provider metadata,
+but that makes sense as there is no keycloak VM running.  You will definitely get an exception about no location options
+found since we have not loaded any data.  Load some data using the bulk_import_rf_events.bash-windows script.  You will
+want to run this from WSL.
+
+Since I had installed Docker prior to installing WSL, my default distro was the stripped down docker distro.  I had to
+install the Ubuntu 22.04 LTS distro and make it the default.  Install ubuntu through the windows store, then use the
+'wsl --list' and 'wsl -s <distro>' to set the default distro
+
+Start button -> "WSL"    # Launches a linux terminal
+# cd /mnt/host/c/Users/adamc/code/wfbrowser/scripts/
+
+####################################################################################################
+#### I could not get the script to work in WSL and manually loaded a single event from windows #####
+####################################################################################################
+
+First I removed commented out the security restrictions on  web.xml on posting to /ajax/event, then I commented out the
+getPrincipal() call in the ajax/event controller and made the userName = "anonymous".
+
+Update the data directory by setting
+dataDir=C:\\Users\\adamc\\code\\wfBrowser\\data
+in \src\main\java\wfBrowser.properties file
+
+Restart the server and run this
+command from Windows powershell.
+curl.exe -X POST -d datetime="2018-05-04 09:55:33.2" -d location="0L04" -d system="rf" -d classification="" -d grouped="true" http://localhost:8080/wfbrowser/ajax/event
+
+You should see something like this in the wildfly logs
+09:19:10,449 INFO  [org.jlab.wfbrowser.presentation.controller.ajax.EventAjax] (default task-1) User 'anonymous' attempting to add event sys=rf loc=0L04 cls= timestamp=2018-05-04T13:55:33.200Z grp=true arc=false del=false cFile=null
+09:19:10,781 INFO  [org.jlab.wfbrowser.presentation.controller.ajax.EventAjax] (default task-1) Event addition succeeded
+
+## I made a new powershell script for bulk loading RF data.  This should make life a little easier
