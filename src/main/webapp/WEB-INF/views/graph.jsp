@@ -110,12 +110,22 @@
                 float: right;
                 vertical-align: bottom;
             }
+            /* The FFT plots appear in a dialog and I want them to fill whatever size the dialog is. */
+            .dialog .graph-container {
+                height: 95%;
+                width: 100%;
+            }
+            .ajax-loader {
+                text-align: center;
+                padding: 10px;
+            }
         </style>
     </jsp:attribute>
     <jsp:attribute name="scripts">
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.1.0.min.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-synchronizer.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-crosshair.js"></script>
+        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/math.12.4.2.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/vis.min.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/graph.js"></script>
     </jsp:attribute>
@@ -245,6 +255,7 @@
             <hr/>
             <div id="graph-panel" style="width:100%;"></div>
         </section>
+        <div id="fft-dialog" class="dialog" title="FFT"><div class="graph-container"><div id="fft-loading" class="ajax-loader" hidden="">Computing.  Please wait.</div><div id="graph-chart-fft" class="graph-chart"></div><div id="graph-chart-fft-legend" class="graph-legend"></div></div></div>
         <script>
             var jlab = jlab || {};
             jlab.wfb = jlab.wfb || {};

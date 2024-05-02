@@ -268,6 +268,7 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
         + "<div class='graph-legend' id=graph-legend-" + chartId + " ></div>" +
         "<div class='graph-y-control' id='graph-y-controls-'" + chartId + ">" +
         "<ul class='key-value-list'>" +
+        "<li><div><button id='graph-fft-button-" + chartId + "'>FFT</button></div></li>" +
         "<li><div class='li-key'><label>y-max</label></div><div class='li-value'><input id='graph-y-max-" + chartId + "' type='number' value='" + ymax + "'></div></li>" +
         "<li><div class='li-key'><label>y-min</label></div><div class='li-value'><input id='graph-y-min-" + chartId + "' type='number' value='" + ymin + "'></div></li>" +
         "</ul></div></div>");
@@ -333,9 +334,123 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
     ymaxElement.addEventListener('change', updateYRange);
     yminElement.addEventListener('change', updateYRange);
 
+    $("#graph-fft-button-" + chartId).on("click",async (event) => {
+
+        let xRange = g.xAxisRange();
+        let fftChartId = "graph-chart-fft";
+        let dialogSelector = "#fft-dialog";
+        $(dialogSelector).dialog({
+            autoOpen: true,
+            width: 1000,
+            height: 500,
+            modal: true,
+            title: "FFT View on [" + math.round(xRange[0], 2) + " ms, " + math.round(xRange[1], 2) + " ms]",
+            close: function(event, ui) {
+                $(dialogSelector).dialog("destroy");
+                document.getElementById("graph-chart-fft").innerHTML = "";
+                document.getElementById("graph-chart-fft-legend").innerHTML = "";
+            }
+        });
+
+        let fftLoaderDiv = document.getElementById("fft-loading");
+        fftLoaderDiv.hidden = false;
+
+        let fftOpts = JSON.parse(JSON.stringify(graphOptions));
+        fftOpts.colors = opts.colors;
+        fftOpts.labels = opts.labels;
+        fftOpts.title = series + " FFT";
+        fftOpts.resizable = "both";
+        fftOpts.plugins = [doubleClickZoomOutPlugin, crossHairPlugin];
+        fftOpts.xlabel = "Frequency (Hz)";
+        fftOpts.ylable = "FFT Magnitude";
+        fftOpts.labelsDiv = document.getElementById("graph-chart-fft-legend");
+
+        // Without the very brief sleep, the dialog does not open until the FFT is done and the graph is displayed.
+        // This can take several seconds depending on the number and exact length of signals sent through FFT.
+        // It would probably be better to run these in parallel as Web Workers, but I want to get this out and optimize
+        // later if needed (as I don't have experience with web workers).
+        await sleep(20);
+        let fftData = jlab.wfb.getFFTData(data, xRange);
+        await sleep(10);
+        fftLoaderDiv.hidden = true;
+
+        let graph = new Dygraph(
+            // containing div
+            document.getElementById(fftChartId),
+            fftData,
+            fftOpts
+        );
+
+        $(dialogSelector).bind("dialogresize", null, function(event, ui) {graph.resize();});
+    });
+
     return g;
 };
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+jlab.wfb.getFFTData = function(data, xRange) {
+    let fftStart;
+    // let n = data.length;
+    let idxMin = -1;
+    let idxMax = data.length;
+    for (let i = 0; i < data.length - 1; i++) {
+        if (idxMin === -1) {
+            if (data[i][0] === xRange[0]) {
+                idxMin = i;
+            } else if (data[i][0] <= xRange[0] && data[i + 1][0] > xRange[0]) {
+                idxMin = i ;
+            }
+        }
+        if (idxMax === data.length) {
+            if (data[i][0] <= xRange[1] && data[i + 1][0] > xRange[1]){
+                idxMax = i;
+                break;
+            }
+        }
+    }
+    data = data.slice(idxMin, idxMax);
+    let n = data.length;
+    let nFreq = math.floor(n / 2);
+    // even number of samples is n/2+1 to include the nyquist frequency
+    if (n % 2 === 0) {
+        nFreq = nFreq + 1;
+    }
+
+    let fftOut = Array(nFreq + 1);
+    for (let i = 0; i <= nFreq; i++) {
+        fftOut[i] = Array(data[i].length);
+    }
+    // Calculate the sampling frequency.  First column is the time column in milliseconds - invert sampling interval
+    // Its 1000 / ..., because the time units are milliseconds, and we want frequency in Hertz
+    let fs = 1000 / (data[2][0] - data[1][0]);
+    for (let j = 0; j < data[0].length; j++) {
+        if (j === 0) {
+            // Generate array of frequencies that correspond to the FFT output.  Takes the place of Time column.
+            for (let i = 0; i <= nFreq; i++) {
+                fftOut[i][j] = i * fs / n;
+            }
+        } else {
+            let timeData = Array(data.length);
+            for (let i = 0; i < timeData.length; i++) {
+                timeData[i] = data[i][j];
+            }
+            fftStart = Date.now();
+            let freqData = math.fft(timeData);
+            fftEnd = Date.now();
+
+            // Only keep the first nFreq values as they match the positive frequencies from the FFT.
+            // Compute the magnitude since we will not be showing any phase information.
+            for (let i = 1; i <= nFreq; i++) {
+                fftOut[i][j] = math.sqrt(freqData[i]['re'] ** 2 + freqData[i]['im'] ** 2)
+            }
+        }
+    }
+
+    return fftOut
+};
 
 /**
  * This function is responsible for updating the window's URL and form controls to match the currently displayed page.
