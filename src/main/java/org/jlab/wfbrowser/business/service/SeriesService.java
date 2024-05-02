@@ -103,14 +103,14 @@ public class SeriesService {
             pstmt.setString(4, description);
             pstmt.setString(5, units);
             if (yMin == null) {
-                pstmt.setNull(7, java.sql.Types.NULL);
+                pstmt.setNull(6, java.sql.Types.NULL);
             } else {
-                pstmt.setDouble(7, yMin);
+                pstmt.setDouble(6, yMin);
             }
             if (yMax == null) {
-                pstmt.setNull(8, java.sql.Types.NULL);
+                pstmt.setNull(7, java.sql.Types.NULL);
             } else {
-                pstmt.setDouble(8, yMax);
+                pstmt.setDouble(7, yMax);
             }
             int n = pstmt.executeUpdate();
             if (n < 1) {
@@ -159,10 +159,6 @@ public class SeriesService {
                 pstmt.setDouble(7, yMax);
             }
             pstmt.setInt(8, seriesId);
-
-            System.out.println("id=" + seriesId);
-            System.out.println("yMin=" + yMin);
-            System.out.println("yMax=" + yMax);
 
             int n = pstmt.executeUpdate();
             if (n < 1) {

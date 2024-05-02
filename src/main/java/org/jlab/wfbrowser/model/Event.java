@@ -10,29 +10,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import javax.json.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -85,13 +75,11 @@ public class Event implements Comparable<Event> {
     private boolean areWaveformsConsistent = true;  // If all waveforms have the same set of time offsets.  Simplifies certain data operations.
 
     private static Path setDataDir() throws IOException {
-        Properties props = new Properties();
-        try (InputStream is = Event.class.getClassLoader().getResourceAsStream("wfBrowser.properties")) {
-            if (is != null) {
-                props.load(is);
-            }
+        String dataDir = System.getenv("WFB_DATA_DIR");
+        if ( dataDir == null) {
+            dataDir = "/usr/opsdata/waveforms/data";
         }
-        return Paths.get(props.getProperty("dataDir", "/usr/opsdata/waveforms/data"));
+        return Paths.get(dataDir);
     }
 
     /**
@@ -900,14 +888,28 @@ public class Event implements Comparable<Event> {
                 JsonArrayBuilder wjab = jsonFactory.createArrayBuilder();
                 JsonArrayBuilder sjab, djab;
                 JsonObjectBuilder wjob;
+
+                Map<String, Long> dygraphIdMap = new HashMap<>();
+                for (int i = 1; i < headerNames.size(); i++) {
+                    for (Waveform w : waveforms) {
+                        if (w.getWaveformName().equals(headerNames.get(i))) {
+                            dygraphIdMap.put(headerNames.get(i), getDygraphId(headerNames.get(i), i));
+                        }
+                    }
+                }
+                if (system.equals("bpm")) {
+                    // Map the IDs to a contiguous numbering scheme starting at 0 in a one-to-one way
+                    dygraphIdMap = remapDygraphIds(dygraphIdMap);
+                }
+
                 for (int i = 1; i < headerNames.size(); i++) {
                     for (Waveform w : waveforms) {
                         if (w.getWaveformName().equals(headerNames.get(i))) {
                             wjob = jsonFactory.createObjectBuilder().add("waveformName", headerNames.get(i));
 
-                            // Add some information that the client side can cue off of for consitent colors and names.
+                            // Add some information that the client side can cue off of for consistent colors and names.
                             wjob.add("dygraphLabel", getDygraphLabel(headerNames.get(i)));
-                            wjob.add("dygraphId", getDygraphId(headerNames.get(i)));
+                            wjob.add("dygraphId", dygraphIdMap.get(headerNames.get(i)));
 
                             // Get the series names for the waveform and add them
                             sjab = jsonFactory.createArrayBuilder();
@@ -944,6 +946,30 @@ public class Event implements Comparable<Event> {
     }
 
     /**
+     * This method takes updates dygraph IDs for a set of waveforms so they begin a 0 and sequentially increase.  If
+     * two waveforms had the same ID before, they will be mapped to the same low value ID by this method.
+     * @param map A map of waveform name to dygraph ID
+     * @return An updated map of waveform name to dygraph ID with low value IDs.
+     */
+    private Map<String, Long> remapDygraphIds(Map<String, Long> map) {
+        Map<Long, Long> idMapper = new HashMap<>();
+        long index = 0;
+        for (String header : map.keySet()){
+            if (!idMapper.containsKey(map.get(header))) {
+                idMapper.put(map.get(header), index++);
+            }
+        }
+
+        // Rebuild the header to id mapping using the new low number IDs
+        Map<String, Long> newIdMap = new HashMap<>();
+        for (String header : map.keySet()) {
+            newIdMap.put(header, idMapper.get(map.get(header)));
+        }
+        return newIdMap;
+
+    }
+
+    /**
      * Generate a string label used by dygraph clients
      *
      * @param waveformName The name of the waveform for which we are producting
@@ -954,6 +980,7 @@ public class Event implements Comparable<Event> {
         String label;
         switch (system) {
             case "rf":
+            case "bpm":
                 label = waveformName.substring(0, 4);
                 break;
             case "acclrm":
@@ -973,8 +1000,8 @@ public class Event implements Comparable<Event> {
      * Generate a numeric ID that can be used by dygraph clients to group
      * related waveforms
      */
-    private long getDygraphId(String waveformName) {
-        long id;
+    private long getDygraphId(String waveformName, long defaultId) {
+        long id = defaultId;
         switch (system) {
             case "rf":
                 id = Long.parseLong(waveformName.substring(3, 4));
@@ -986,12 +1013,24 @@ public class Event implements Comparable<Event> {
                 idMap.put("LCW", 3L);
                 id = idMap.get(waveformName.substring(7, 10));
                 break;
+            case "bpm":
+                // The BPMs don't have any nice numerical designator since they ID'ed by zone around CEBAF (3C12, 1L02,
+                // etc.).  An easy hashing algorithm is convert the zone to UTF_8 and get it's binary representation.
+                // Then convert each character to its decimal equivalent, but treat the whole string as though it were
+                // a base 256 number during the conversion.  This avoids collisions since there is a one-to-one mapping.
+                byte[] bytes =waveformName.substring(0, 4).getBytes(StandardCharsets.UTF_8);
+                id = 0;
+                for (int i = 0; i < bytes.length; i++) {
+                    int val = bytes[i];
+                    id = id + val * 256^i;
+                }
+                break;
             case "test":
                 // used in test suites
                 id = Long.parseLong(waveformName.substring(4, 5));
                 break;
             default:
-                throw new IllegalStateException("Unrecognized system - " + system);
+                id = defaultId;
         }
         return id;
     }

@@ -723,11 +723,10 @@ public class EventService {
                 // Determine the rules for labeling waveform series (GMES vs DETA2, not Cav1, Cav2, ...)
                 String mapSql = "SELECT series_name, series_id, pattern, system_type.system_name, description, units, waveform_name, ymin, ymax "
                         + " FROM capture_wf"
-                        + " JOIN series ON waveform_name LIKE series.pattern"
+                        + " JOIN series ON capture_wf.waveform_name LIKE series.pattern"
                         + " JOIN system_type ON series.system_id = system_type.system_id"
                         + " JOIN capture ON capture.capture_id = capture_wf.capture_id"
                         + " WHERE event_id = ?"
-                        + " GROUP BY waveform_name"
                         + " ORDER BY waveform_name";
                 pstmt = conn.prepareStatement(mapSql);
                 // Get the waveform data for each event's CaptureFile, then figure out the waveform to series mapping and apply it.

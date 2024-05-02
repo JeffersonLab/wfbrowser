@@ -46,14 +46,14 @@ public class StandaloneConnectionPools {
         if (ds != null) {
             return;
         }
-        String user = "wftest_writer";
+        String user = "waveforms_writer";
         String password = "password";
 
         // Port is same for all hosts
         int port = 3306;
         String host = "localhost";
 
-        String url = "jdbc:mariadb://" + host + ":" + port + "/waveformstest?user=" + user + "&password=" + password
+        String url = "jdbc:mariadb://" + host + ":" + port + "/waveforms?user=" + user + "&password=" + password
                 + "&maxIdleTime=60";
 
         ds = new MariaDbPoolDataSource(url);

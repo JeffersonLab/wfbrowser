@@ -7,6 +7,8 @@ group 'org.jlab'
 version '2.0.0'
 ext.releaseDate = 'TBD'
 ext.resourceNumber = '40'
+ext.adminRole = 'wfb_admin'
+ext.postRole = 'wfb_eventpost'
 // version '1.6.3'
 // ext.releaseDate = 'Feb 13, 2023'
 // ext.resourceNumber = '42'
@@ -43,6 +45,12 @@ war {
         }
         filter {
             String line -> line.replaceAll('@RESOURCE_NUMBER@', resourceNumber)
+        }
+        filter {
+            String line -> line.replaceAll('@ADMIN_ROLE@', adminRole)
+        }
+        filter {
+            String line -> line.replaceAll('@POST_ROLE@', postRole)
         }
     }
 }

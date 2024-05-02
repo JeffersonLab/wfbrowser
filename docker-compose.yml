@@ -1,0 +1,57 @@
+services:
+
+  mariadb:
+    extends:
+      file: deps.yml
+      service: mariadb
+
+  keycloak:
+    extends:
+      file: deps.yml
+      service: keycloak
+
+  puppet:
+    extends:
+      file: deps.yml
+      service: puppet
+
+  mailhog:
+    extends:
+      file: deps.yml
+      service: mailhog
+
+  wfb:
+    hostname: wfb
+    container_name: wfb
+    ports:
+      - "8443:8443"
+      - "8080:8080"
+      - "9990:9990"
+    environment:
+      WFB_FEEDBACK_SENDER_ADDRESS: 'admin@example.com'
+      WFB_FEEDBACK_TO_ADDRESS_CSV: 'user1@example.com,user2@example.com'
+      WFB_CONTENT_CONTACT: 'User Name1 (username1)'
+      WFB_TECHNICAL_CONTACT: 'User Name2 (username2)'
+      WFB_ADMIN_ROLE: 'wfb_admin'
+      WFB_POST_ROLE: 'wfb_eventpost'
+      WFB_DATA_DIR: "/wf-data"
+      KEYCLOAK_REALM: 'test-realm'
+      KEYCLOAK_RESOURCE: 'wfbrowser'
+      KEYCLOAK_SECRET: 'MA7mLvPXLAA2WN0eByHi6W2raPoVWbxq'
+      KEYCLOAK_BACKEND_SERVER_URL: 'http://keycloak:8080'
+      # TLDR; You can't logout unless you set frontend to be your development hostname.
+      # If localhost, then rfd server tries to connect to itself and finds no one listening.  Need to expose
+      # keycloak port, and use dev system hostname to direct traffic to the proper system/port
+      # KEYCLOAK_FRONTEND_SERVER_URL: 'http://<hostname>:8081'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080'
+      LOGBOOK_SERVER: 'elog'
+      MARIADB_DATASOURCE: 'waveforms_rw'
+      MARIADB_SERVER: 'mariadb:3306'
+      MARIADB_USER: 'waveforms_writer'
+      MARIADB_PASS: 'password'
+      MARIADB_DB_NAME: 'waveforms'
+      PUPPET_SHOW_SERVER: 'puppet:3000'
+      BACKEND_SERVER_URL: 'http://wfb:8080'
+      FRONTEND_SERVER_URL: 'https://localhost:8443'
+    volumes:
+      - ./data:/wf-data

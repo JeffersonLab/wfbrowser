@@ -90,8 +90,8 @@
         </web-resource-collection>
         <auth-constraint>
             <description/>
-            <role-name>wfb_admin</role-name>
-            <role-name>wfb_eventpost</role-name>
+            <role-name>@ADMIN_ROLE@</role-name>
+            <role-name>@POST_ROLE@</role-name>
         </auth-constraint>
     </security-constraint>
     <security-constraint>
@@ -104,8 +104,8 @@
         </web-resource-collection>
         <auth-constraint>
             <description>Restrict to only admins or those given explicit permission</description>
-            <role-name>wfb_admin</role-name>
-            <role-name>wfb_eventpost</role-name>
+            <role-name>@ADMIN_ROLE@</role-name>
+            <role-name>@POST_ROLE@</role-name>
         </auth-constraint>
     </security-constraint>
     <security-constraint>
@@ -117,19 +117,18 @@
         </web-resource-collection>
         <auth-constraint>
             <description/>
-            <role-name>wfb_admin</role-name>
+            <role-name>@ADMIN_ROLE@</role-name>
         </auth-constraint>
     </security-constraint>
     <login-config>
-        <auth-method>KEYCLOAK</auth-method>
-        <realm-name>jlab</realm-name>
+        <auth-method>OIDC</auth-method>
     </login-config>
     <security-role>
         <description>Role that provides admin permissions for the app.</description>
-        <role-name>wfb_admin</role-name>
+        <role-name>@ADMIN_ROLE@</role-name>
     </security-role>
     <security-role>
         <description>Role that provides permissions necessary for posting a new event</description>
-        <role-name>wfb_eventpost</role-name>
+        <role-name>@POST_ROLE@</role-name>
     </security-role>
 </web-app>

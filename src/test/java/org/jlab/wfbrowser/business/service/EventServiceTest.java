@@ -379,7 +379,10 @@ public class EventServiceTest {
                 "{\"location\":\"ungrouped\",\"label-combo\":\"NULL\",\"count\":4}" +
                 "]")).readArray();
 
-        JsonArray result = es.getLabelTallyAsJson(null, null, true);
+        JsonArray result = es.getLabelTallyAsJson(
+                new EventFilter(null, null, null, "test", null,
+                        null, null, null, null),
+                null, true);
         assertEquals(exp.toString(), result.toString());
     }
 
@@ -388,7 +391,7 @@ public class EventServiceTest {
     public void test6DeleteEvents() throws Exception {
         System.out.println("Deleting Test Events");
         EventService instance = new EventService();
-        EventFilter filter = new EventFilter(null, null, null, null, null, null, null, null, null);
+        EventFilter filter = new EventFilter(null, null, null, "test", null, null, null, null, null);
         List<Event> allEvents = instance.getEventList(filter);
         assertEquals(eventList.size(), allEvents.size());
 
