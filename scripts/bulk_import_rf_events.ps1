@@ -19,7 +19,7 @@ Usage: $script:MyInvocation.MyCommand [-Help] [-BeginTime <begin_time>] [-EndTim
 
 function Get-Config {
 param (
-    [string] $Filename = "../cfg/configs.json",
+    [string] $Filename = "./configs.json",
     [string] $Env = "dev"
 )
     $out = Get-Content $filename | ConvertFrom-Json
