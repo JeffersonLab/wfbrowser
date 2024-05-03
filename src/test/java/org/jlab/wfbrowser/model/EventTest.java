@@ -156,7 +156,7 @@ public class EventTest {
         }
 
         // Will pass as long as there is no exception thrown and only two events are found in the database
-        assertEquals(all.size(), 2);
+        assertEquals(2, all.size());
     }
 
 //    @Test
