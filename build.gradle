@@ -14,7 +14,7 @@ ext.postRole = 'wfb_eventpost'
 // ext.resourceNumber = '42'
 
 tasks.withType(JavaCompile) {
-    options.release = 8
+    options.release = 11
     options.encoding = 'UTF-8'
     options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
 }
@@ -26,6 +26,7 @@ repositories {
 dependencies {
     implementation 'org.tuckey:urlrewritefilter:4.0.4'
     implementation 'org.apache.commons:commons-compress:1.18'
+    implementation 'org.jlab:smoothness-weblib:4.5.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'mysql:mysql-connector-java:8.0.12'
     testImplementation 'org.glassfish:javax.json:1.1.4'
