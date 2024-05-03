@@ -30,7 +30,7 @@
     </context-param>
     <context-param>
         <param-name>contentContact</param-name>
-        <param-value>Adam Carpenter (adamc), Gary Croke (gcroke)</param-value>
+        <param-value>Adam Carpenter (adamc), Gary Croke (gcroke), Jayendrika Tiskumara (jkt)</param-value>
     </context-param>
     <context-param>
         <param-name>technicalContact</param-name>
