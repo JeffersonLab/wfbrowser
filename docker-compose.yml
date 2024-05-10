@@ -33,7 +33,7 @@ services:
       WFB_CONTENT_CONTACT: 'User Name1 (username1)'
       WFB_TECHNICAL_CONTACT: 'User Name2 (username2)'
       WFB_ADMIN_ROLE: 'wfb_admin'
-      WFB_POST_ROLE: 'wfb_eventpost'
+      WFB_POST_ROLE: 'wfb_data'
       WFB_DATA_DIR: "/wf-data"
       KEYCLOAK_REALM: 'test-realm'
       KEYCLOAK_RESOURCE: 'wfbrowser'
