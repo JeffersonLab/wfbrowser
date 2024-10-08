@@ -3,6 +3,7 @@ package org.jlab.wfbrowser.presentation.controller;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.*;
@@ -62,82 +63,43 @@ public class Graph extends HttpServlet {
             minCaptureFiles = Integer.parseInt(minCF);
         }
 
+        // All arguments must be specified (even if only as an empty string).  Series handling is a little more complex.
+        // Check that all the options are specified.  If not they will be set via a redirect.
+        boolean redirectNeeded = false;
+        // Check for simple options
+        if (system == null || system.isEmpty() || beginString == null || beginString.isEmpty()
+                || endString == null || endString.isEmpty() || locSel == null || locSel.length == 0
+                || classSel == null || minCF == null || serSel == null || serSetSel == null
+                || eventId == null) {
+            redirectNeeded = true;
+        }
+
+        // You need either series sets or series to be given.
+        if ((serSel == null || serSel.length == 0) && (serSetSel == null || serSetSel.length == 0)) {
+            redirectNeeded = true;
+        }
+
         /* Basic strategy with these session attributes - if we get explicit request parameters, use them and update the session
          * copies.  If we don't get request params, but we have the needed session attributes, use them and redirect.  If we don't
          * have request or session values, then use defaults, update the session, and redirect.
          */
         HttpSession session = request.getSession();
-        boolean redirectNeeded = false;
 
-        // Get the config for this system
+        // Get the default config for this system
         GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
-        synchronized (SessionUtils.getSessionLock(request, null)) {
-            // We only want to work with the sessionGraphConfig object within this lock.
-            GraphConfig sessionGraphConfig;
-
-            // Make sure we have a default system to query against
-            if (system == null) {
-                redirectNeeded = true;
-                if (session.getAttribute("graphSystem") == null) {
-                    system = "rf";
-                } else {
-                    system = (String) session.getAttribute("graphSystem");
-                }
-            }
-            session.setAttribute("graphSystem", system);
-            @SuppressWarnings("unchecked")
-            Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
-            if (gcMap == null) {
-                gcMap = new HashMap<>();
-                session.setAttribute("graphConfigMap", gcMap);
-            }
-            if (gcMap.get(system) == null) {
-                // Use the default as the starting point for the session config if none exists.
-                gcMap.put(system, defaultGraphConfig);
-                // Since there was no session, it is likely the first time to hit this page and a redirect is needed
-                redirectNeeded = true;
-            } else {
-                // Update the different options in case they may have changed since last use.
-                sessionGraphConfig = gcMap.get(system);
-                sessionGraphConfig.setLocationOptions(defaultGraphConfig.getLocationOptions());
-                sessionGraphConfig.setClassificationOptions(defaultGraphConfig.getClassificationOptions());
-                sessionGraphConfig.setSeriesOptions(defaultGraphConfig.getSeriesOptions());
-                sessionGraphConfig.setSeriesSetOptions(defaultGraphConfig.getSeriesSetOptions());
-            }
+        if (system == null) {
+            system = defaultGraphConfig.getSystem();
         }
 
+        // Set up the session
+        setupSession(system, request);
+
+        // Process selections compared with their viable options
         List<Series> seriesOptions = defaultGraphConfig.getSeriesOptions();
+        Set<Series> seriesSelections = initializeSeriesSelections(serSel, seriesOptions);
+
         List<SeriesSet> seriesSetOptions = defaultGraphConfig.getSeriesSetOptions();
-
-        // Get the series selections if any were made.  Keep only the valid ones.
-        Set<Series> seriesSelections = null;
-        if (serSel != null && serSel.length > 0) {
-            for (String seriesName : serSel) {
-                for (Series s : seriesOptions) {
-                    if (seriesName.equals(s.getName())) {
-                        if (seriesSelections == null) {
-                            seriesSelections = new HashSet<>();
-                        }
-                        seriesSelections.add(s);
-                    }
-                }
-            }
-        }
-
-        // Get the series set selections if any were made.  Keep only the valid ones.
-        Set<SeriesSet> seriesSetSelections = null;
-        if (serSetSel != null && serSetSel.length > 0) {
-            for (String setName : serSetSel) {
-                for (SeriesSet s : seriesSetOptions) {
-                    if (setName.equals(s.getName())) {
-                        if (seriesSetSelections == null) {
-                            seriesSetSelections = new HashSet<>();
-                        }
-                        seriesSetSelections.add(s);
-                    }
-                }
-            }
-        }
+        Set<SeriesSet> seriesSetSelections = initializeSeriesSetSelections(serSetSel, seriesSetOptions);
 
         List<String> locationOptions = defaultGraphConfig.getLocationOptions();
         Set<String> locationSelections = keepOnlyMatches(locSel, locationOptions);
@@ -146,6 +108,7 @@ public class Graph extends HttpServlet {
         Set<String> classificationSelections = keepOnlyMatches(classSel, classificationOptions);
 
         Long eId = (eventId == null || eventId.isEmpty()) ? null : Long.parseLong(eventId);
+
 
         GraphConfig requestGraphConfig = new GraphConfig(system, locationSelections, classificationSelections, minCaptureFiles,
                 eId, beginString, endString, classificationOptions, locationOptions, seriesSelections, seriesOptions,
@@ -164,11 +127,13 @@ public class Graph extends HttpServlet {
             @SuppressWarnings("unchecked")
             Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
             GraphConfig sessionGraphConfig = gcMap.get(system);
-            boolean updated = sessionGraphConfig.overwriteWith(requestGraphConfig);
-            redirectNeeded = redirectNeeded || updated;
+            System.out.println(system);
+            System.out.println(sessionGraphConfig);
 
+            // Update the session with the currently requested values
+            sessionGraphConfig.overwriteWith(requestGraphConfig);
 
-            // Overwrite the graph configuration variables with the finals values after mergeing session and request
+            // Overwrite the graph configuration variables with the finals values after merging session and request
             // versions.
             eId = sessionGraphConfig.getEventId();
             system = sessionGraphConfig.getSystem();
@@ -196,18 +161,25 @@ public class Graph extends HttpServlet {
                     currentEvent = es.getMostRecentEvent(filter, true);
                     eId = (currentEvent == null) ? null : currentEvent.getEventId();
                     sessionGraphConfig.setEventId(eId);
+
+                    // If this is null, we'll need to redirect to switch to an empty eventId param.  Means we had an
+                    // event requested that does not match the other parameters.
                     if (eId == null) {
                         redirectNeeded = true;
                     }
                 }
-                // If we don't have an event ID to display, let's see if we can find one to use with our time range.
+
+                // We do not have a requested event ID, let's see if we can find one to use with our time range.  This
+                // could be because the requested event did not match the other filters and was dropped.
                 if (eId == null) {
                     EventFilter filter = new EventFilter(null, begin, end, system,
                             locationSelectionsList, classificationSelectionsList, null, null, minCaptureFiles);
                     currentEvent = es.getMostRecentEvent(filter, true);
                     sessionGraphConfig.setEventId((currentEvent == null) ? null : currentEvent.getEventId());
-                    if (eId != null) {
+                    if (currentEvent != null) {
+                        // We got a new event to display, we'll need to redirect to update the url.
                         redirectNeeded = true;
+                        eId = currentEvent.getEventId();
                     }
                 }
             } catch (SQLException ex) {
@@ -220,32 +192,8 @@ public class Graph extends HttpServlet {
 
             // If a redirect was found to be needed, build the URL based on variables set above and redirect to it.
             if (redirectNeeded) {
-                StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/graph?"
-                        + "eventId=" + URLEncoder.encode((eId == null ? "" : "" + eId), "UTF-8")
-                        + "&system=" + URLEncoder.encode(system, "UTF-8")
-                        + "&begin=" + URLEncoder.encode(beginString, "UTF-8")
-                        + "&end=" + URLEncoder.encode(endString, "UTF-8"));
-                for (String location : locationSelections) {
-                    redirectUrl.append("&location=").append(URLEncoder.encode(location, "UTF-8"));
-                }
-                for (String classification : classificationSelections) {
-                    redirectUrl.append("&classification=").append(URLEncoder.encode(classification, "UTF-8"));
-                }
-                if (seriesSelections != null) {
-                    for (Series series : seriesSelections) {
-                        redirectUrl.append("&series=").append(URLEncoder.encode(series.getName(), "UTF-8"));
-                    }
-                }
-                if (seriesSetSelections != null) {
-                    for (SeriesSet seriesSet : seriesSetSelections) {
-                        redirectUrl.append("&seriesSet=").append(URLEncoder.encode(seriesSet.getName(), "UTF-8"));
-                    }
-                }
-                if (minCaptureFiles != null) {
-                    redirectUrl.append("&minCF=").append(URLEncoder.encode(minCaptureFiles.toString(), "UTF-8"));
-                }
-
-                response.sendRedirect(response.encodeRedirectURL(redirectUrl.toString()));
+                doRedirect(request, response, eId, system, beginString, endString, locationSelections,
+                        classificationSelections, seriesSelections, seriesSetSelections, minCaptureFiles);
             }
 
             // Process more configuration info since we know we aren't redirecting and will use it.
@@ -301,7 +249,6 @@ public class Graph extends HttpServlet {
                 }
             }
 
-
             // Get a list of events that are to be displayed in the timeline - should not be in session since this might change
             EventService es = new EventService();
             try {
@@ -313,7 +260,6 @@ public class Graph extends HttpServlet {
                 LOGGER.log(Level.SEVERE, "Error querying database for event information.", ex);
                 throw new ServletException("Error querying database for event information.");
             }
-
         }
 
         JsonArrayBuilder jab = Json.createArrayBuilder();
@@ -378,15 +324,15 @@ public class Graph extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/graph.jsp").forward(request, response);
     }
 
+
     /**
      * Convenience method for filtering out invalid choices.
      *
      * @param source An array of choices that may contain duplicates or invalid entries
      * @param valid  An array of valid choices
-     * @param <T>    The common type of the source, valid selections, and returned Set (if not null)
      * @return The Set of valid entries in source or null if no source or empty source was provided.
      */
-    private static Set<String> keepOnlyMatches(String[] source, List<String> valid) {
+    private Set<String> keepOnlyMatches(String[] source, List<String> valid) {
         // Create a list of the selections.  Only keep names that match valid options.
         Set<String> keep = null;
         if (source != null && source.length > 0) {
@@ -400,5 +346,131 @@ public class Graph extends HttpServlet {
             }
         }
         return keep;
+    }
+
+
+    /**
+     * Initialize session data or update any parts that may have changed since last use.
+     *
+     * @param system  The name of the system the session is currently interested in
+     * @param request The current HTTP request being processed
+     * @throws IOException If I/O problem
+     */
+    private void setupSession(String system, HttpServletRequest request) throws IOException {
+        HttpSession session = request.getSession();
+        GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
+
+        synchronized (SessionUtils.getSessionLock(request, null)) {
+
+            // Make sure we have a default system to query against
+            if (system == null) {
+                if (session.getAttribute("graphSystem") == null) {
+                    system = defaultGraphConfig.getSystem();
+                } else {
+                    system = (String) session.getAttribute("graphSystem");
+                }
+            }
+            session.setAttribute("graphSystem", system);
+            @SuppressWarnings("unchecked")
+            Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
+            if (gcMap == null) {
+                gcMap = new HashMap<>();
+                session.setAttribute("graphConfigMap", gcMap);
+            }
+            if (gcMap.get(system) == null) {
+                // Use the default as the starting point for the session config if none exists.
+                gcMap.put(system, defaultGraphConfig);
+            } else {
+                // We only want to work with the sessionGraphConfig object within this lock.
+                GraphConfig sessionGraphConfig = gcMap.get(system);
+
+                // Update the different options in case they may have changed since last use.
+                sessionGraphConfig.setLocationOptions(defaultGraphConfig.getLocationOptions());
+                sessionGraphConfig.setClassificationOptions(defaultGraphConfig.getClassificationOptions());
+                sessionGraphConfig.setSeriesOptions(defaultGraphConfig.getSeriesOptions());
+                sessionGraphConfig.setSeriesSetOptions(defaultGraphConfig.getSeriesSetOptions());
+            }
+        }
+    }
+
+
+    private Set<Series> initializeSeriesSelections(String[] serSel, List<Series> seriesOptions) {
+        // Get the series selections if any were made.  Keep only the valid ones.
+        Set<Series> seriesSelections = null;
+        if (serSel != null && serSel.length > 0) {
+            for (String seriesName : serSel) {
+                for (Series s : seriesOptions) {
+                    if (seriesName.equals(s.getName())) {
+                        if (seriesSelections == null) {
+                            seriesSelections = new HashSet<>();
+                        }
+                        seriesSelections.add(s);
+                    }
+                }
+            }
+        }
+        return seriesSelections;
+    }
+
+    private Set<SeriesSet> initializeSeriesSetSelections(String[] serSetSel, List<SeriesSet> seriesSetOptions) {
+        Set<SeriesSet> seriesSetSelections = null;
+        if (serSetSel != null && serSetSel.length > 0) {
+            for (String setName : serSetSel) {
+                for (SeriesSet s : seriesSetOptions) {
+                    if (setName.equals(s.getName())) {
+                        if (seriesSetSelections == null) {
+                            seriesSetSelections = new HashSet<>();
+                        }
+                        seriesSetSelections.add(s);
+                    }
+                }
+            }
+        }
+        return seriesSetSelections;
+    }
+
+    private void doRedirect(HttpServletRequest request, HttpServletResponse response, Long eId, String system,
+                            String beginString, String endString, Set<String> locationSelections,
+                            Set<String> classificationSelections, Set<Series> seriesSelections,
+                            Set<SeriesSet> seriesSetSelections, Integer minCaptureFiles) throws IOException {
+        StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/graph?"
+                + "eventId=" + URLEncoder.encode((eId == null ? "" : "" + eId), StandardCharsets.UTF_8)
+                + "&system=" + URLEncoder.encode(system, StandardCharsets.UTF_8)
+                + "&begin=" + URLEncoder.encode(beginString, StandardCharsets.UTF_8)
+                + "&end=" + URLEncoder.encode(endString, StandardCharsets.UTF_8));
+        if (locationSelections.isEmpty()) {
+            redirectUrl.append("&location=");
+        } else {
+            for (String location : locationSelections) {
+                redirectUrl.append("&location=").append(URLEncoder.encode(location, StandardCharsets.UTF_8));
+            }
+        }
+        if (classificationSelections.isEmpty()) {
+            redirectUrl.append("&classification=");
+        } else {
+            for (String classification : classificationSelections) {
+                redirectUrl.append("&classification=").append(URLEncoder.encode(classification, StandardCharsets.UTF_8));
+            }
+        }
+        if (seriesSelections != null && !seriesSelections.isEmpty()) {
+            for (Series series : seriesSelections) {
+                redirectUrl.append("&series=").append(URLEncoder.encode(series.getName(), StandardCharsets.UTF_8));
+            }
+        } else {
+            redirectUrl.append("&series=");
+        }
+        if (seriesSetSelections != null && !seriesSetSelections.isEmpty()) {
+            for (SeriesSet seriesSet : seriesSetSelections) {
+                redirectUrl.append("&seriesSet=").append(URLEncoder.encode(seriesSet.getName(), StandardCharsets.UTF_8));
+            }
+        } else {
+            redirectUrl.append("&seriesSet=");
+        }
+        if (minCaptureFiles != null) {
+            redirectUrl.append("&minCF=").append(URLEncoder.encode(minCaptureFiles.toString(), StandardCharsets.UTF_8));
+        } else {
+            redirectUrl.append("&minCF=");
+        }
+        response.sendRedirect(response.encodeRedirectURL(redirectUrl.toString()));
     }
 }
