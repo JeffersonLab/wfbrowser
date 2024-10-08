@@ -88,7 +88,9 @@ public class Graph extends HttpServlet {
 
         // Get the default config for this system
         GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
-        if (system == null) { system = defaultGraphConfig.getSystem(); }
+        if (system == null) {
+            system = defaultGraphConfig.getSystem();
+        }
 
         // Setup the session
         setupSession(system, request);
