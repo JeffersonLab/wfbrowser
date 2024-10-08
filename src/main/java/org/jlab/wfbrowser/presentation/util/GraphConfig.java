@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  */
 public class GraphConfig {
     private static final Logger LOGGER = Logger.getLogger(GraphConfig.class.getName());
-    private String system;
+    private final String system;
     private Set<String> locations;
     private List<String> locationOptions;
     private Set<String> classifications;
@@ -39,7 +39,7 @@ public class GraphConfig {
     private Long eventId;
     private Instant begin;
     private Instant end;
-    private DateTimeFormatter dtf;
+    private final DateTimeFormatter dtf;
 
     /**
      * A factory method for producing the default graph page configuration for the specified system.
@@ -56,9 +56,8 @@ public class GraphConfig {
         List<SeriesSet> seriesSetOptions;
         Set<String> locations;
         List<String> locationOptions;
-        Set<String> classifications;
+        Set<String> classifications = null;
         List<String> classificationOptions;
-        Integer minCaptureFiles = null;
         Event currentEvent;
         Instant end = Instant.now();
         Instant begin = end.plus(-2, ChronoUnit.DAYS);
@@ -80,7 +79,7 @@ public class GraphConfig {
             throw new RuntimeException("Error querying database for series information.");
         }
 
-        // By default for RF,  we want the GDR Trip view.  Otherwise, do something acceptable if it's not there.
+        // For RF, we want the GDR Trip view as default.  Otherwise, do something acceptable if it's not there.
         for (SeriesSet sSet : seriesSetOptions) {
             if (sSet.getName().equals("GDR Trip")) {
                 seriesSets.add(sSet);
@@ -95,11 +94,24 @@ public class GraphConfig {
             series.add(next);
         }
 
-        // Get all of the classification options and set them as selected
+        // Get all the classification options and set them as selected unless otherwise specified.
         classificationOptions = queryClassificationOptions(system);
-        classifications = new HashSet<>(classificationOptions);
+        if (classificationOptions != null && !classificationOptions.isEmpty()) {
+            if (system.equals("rf")) {
+                classifications = new HashSet<>();
+                if (classificationOptions.contains("trip")) {
+                    classifications.add("trip");
+                }
+            }
 
-        // Get all of the location options and set them as selected
+            // If we haven't specified a default already, then add all classification options.
+            if (classifications == null || classifications.isEmpty()) {
+                classifications = new HashSet<>(classificationOptions);
+                classifications.addAll(classificationOptions);
+            }
+        }
+
+        // Get all the location options and set them as selected
         locationOptions = queryLocationOptions(system);
         locations = new HashSet<>(locationOptions);
 
@@ -107,14 +119,14 @@ public class GraphConfig {
         // Figure out the most recent event within the time range and other options.
         try {
             currentEvent = es.getMostRecentEvent(new EventFilter(null, begin, end, system, locationOptions,
-                    classificationOptions, null, null, minCaptureFiles), false);
+                    classificationOptions, null, null, null), false);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error querying database for latest event", ex);
             throw new RuntimeException("Error querying database for latest event", ex);
         }
 
         Long eventId = (currentEvent == null) ? null : currentEvent.getEventId();
-        return new GraphConfig(system, locations, classifications, minCaptureFiles, eventId, begin, end,
+        return new GraphConfig(system, locations, classifications, null, eventId, begin, end,
                 classificationOptions, locationOptions, series, seriesOptions, seriesSets, seriesSetOptions);
     }
 
@@ -123,7 +135,7 @@ public class GraphConfig {
      * Query the database for the known classifications of events for the given system.
      *
      * @param system The name of the system
-     * @return An sorted list of the classification options
+     * @return A sorted list of the classification options
      */
     private static List<String> queryClassificationOptions(String system) {
         // Lookup the options for event classification.  Select them all by default, but some systems will have none.
@@ -144,7 +156,7 @@ public class GraphConfig {
      * Query the database for the known locations of events for the given system.
      *
      * @param system The name of the system
-     * @return An sorted list of the location options
+     * @return A sorted list of the location options
      */
     private static List<String> queryLocationOptions(String system) {
         // Lookup the location options for this system.
@@ -309,7 +321,6 @@ public class GraphConfig {
         this.seriesSetOptions = seriesSetOptions;
         updateSeriesMasterSet();
 
-        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         this.end = (end == null || end.isEmpty()) ? null : TimeUtil.getInstantFromDateTimeString(end);
         this.begin = (begin == null || begin.isEmpty()) ? null : TimeUtil.getInstantFromDateTimeString(begin);
         this.dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
