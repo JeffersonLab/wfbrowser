@@ -2,9 +2,8 @@ package org.jlab.wfbrowser.presentation.controller;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.*;
@@ -92,7 +91,7 @@ public class Graph extends HttpServlet {
             system = defaultGraphConfig.getSystem();
         }
 
-        // Setup the session
+        // Set up the session
         setupSession(system, request);
 
         // Process selections compared with their viable options
@@ -435,40 +434,40 @@ public class Graph extends HttpServlet {
                             Set<String> classificationSelections, Set<Series> seriesSelections,
                             Set<SeriesSet> seriesSetSelections, Integer minCaptureFiles) throws IOException {
         StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/graph?"
-                + "eventId=" + URLEncoder.encode((eId == null ? "" : "" + eId), "UTF-8")
-                + "&system=" + URLEncoder.encode(system, "UTF-8")
-                + "&begin=" + URLEncoder.encode(beginString, "UTF-8")
-                + "&end=" + URLEncoder.encode(endString, "UTF-8"));
+                + "eventId=" + URLEncoder.encode((eId == null ? "" : "" + eId), StandardCharsets.UTF_8)
+                + "&system=" + URLEncoder.encode(system, StandardCharsets.UTF_8)
+                + "&begin=" + URLEncoder.encode(beginString, StandardCharsets.UTF_8)
+                + "&end=" + URLEncoder.encode(endString, StandardCharsets.UTF_8));
         if (locationSelections.isEmpty()) {
             redirectUrl.append("&location=");
         } else {
             for (String location : locationSelections) {
-                redirectUrl.append("&location=").append(URLEncoder.encode(location, "UTF-8"));
+                redirectUrl.append("&location=").append(URLEncoder.encode(location, StandardCharsets.UTF_8));
             }
         }
         if (classificationSelections.isEmpty()) {
             redirectUrl.append("&classification=");
         } else {
             for (String classification : classificationSelections) {
-                redirectUrl.append("&classification=").append(URLEncoder.encode(classification, "UTF-8"));
+                redirectUrl.append("&classification=").append(URLEncoder.encode(classification, StandardCharsets.UTF_8));
             }
         }
         if (seriesSelections != null && !seriesSelections.isEmpty()) {
             for (Series series : seriesSelections) {
-                redirectUrl.append("&series=").append(URLEncoder.encode(series.getName(), "UTF-8"));
+                redirectUrl.append("&series=").append(URLEncoder.encode(series.getName(), StandardCharsets.UTF_8));
             }
         } else {
             redirectUrl.append("&series=");
         }
         if (seriesSetSelections != null && !seriesSetSelections.isEmpty()) {
             for (SeriesSet seriesSet : seriesSetSelections) {
-                redirectUrl.append("&seriesSet=").append(URLEncoder.encode(seriesSet.getName(), "UTF-8"));
+                redirectUrl.append("&seriesSet=").append(URLEncoder.encode(seriesSet.getName(), StandardCharsets.UTF_8));
             }
         } else {
             redirectUrl.append("&seriesSet=");
         }
         if (minCaptureFiles != null) {
-            redirectUrl.append("&minCF=").append(URLEncoder.encode(minCaptureFiles.toString(), "UTF-8"));
+            redirectUrl.append("&minCF=").append(URLEncoder.encode(minCaptureFiles.toString(), StandardCharsets.UTF_8));
         } else {
             redirectUrl.append("&minCF=");
         }
