@@ -127,8 +127,6 @@ public class Graph extends HttpServlet {
             @SuppressWarnings("unchecked")
             Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
             GraphConfig sessionGraphConfig = gcMap.get(system);
-            System.out.println(system);
-            System.out.println(sessionGraphConfig);
 
             // Update the session with the currently requested values
             sessionGraphConfig.overwriteWith(requestGraphConfig);
