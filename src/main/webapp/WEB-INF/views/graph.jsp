@@ -272,6 +272,7 @@
             jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'${seriesSet}'<c:if test="${!status.last}">,</c:if></c:forEach>];
             jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
 
+            jlab.wfb.classificationSelections = [<c:forEach var="classification" items="${classificationSelections}" varStatus="status">'${classification}'<c:if test="${!status.last}">,</c:if></c:forEach>];
             jlab.wfb.classificationMap = new Map();
             <c:forEach var="classification" items="${requestScope.classificationMap}">
                 jlab.wfb.classificationMap.set("${classification.key}", ${classification.value});

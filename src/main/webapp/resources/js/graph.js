@@ -465,18 +465,39 @@ jlab.wfb.updateBrowserUrlAndControls = function () {
         + "&end=" + jlab.wfb.end.replace(/ /, '+').encodeXml()
         + "&eventId=" + jlab.wfb.currentEvent.id
         + "&system=" + jlab.wfb.system;
-    for (var i = 0; i < jlab.wfb.seriesSelections.length; i++) {
-        url += "&series=" + jlab.wfb.seriesSelections[i];
+    if (jlab.wfb.seriesSelections.length === 0){
+        url += "&series=";
+    } else {
+        for (var i = 0; i < jlab.wfb.seriesSelections.length; i++) {
+            url += "&series=" + jlab.wfb.seriesSelections[i];
+        }
     }
-    for (var i = 0; i < jlab.wfb.seriesSetSelections.length; i++) {
-        url += "&seriesSet=" + jlab.wfb.seriesSetSelections[i];
+
+    if (jlab.wfb.seriesSetSelections.length === 0) {
+        url += "&seriesSet=";
+    } else {
+        for (var i = 0; i < jlab.wfb.seriesSetSelections.length; i++) {
+            url += "&seriesSet=" + jlab.wfb.seriesSetSelections[i];
+        }
     }
-    for (var i = 0; i < jlab.wfb.locationSelections.length; i++) {
-        url += "&location=" + jlab.wfb.locationSelections[i];
+
+    if (jlab.wfb.locationSelections.length === 0) {
+        url += "&location=";
+    } else {
+        for (var i = 0; i < jlab.wfb.locationSelections.length; i++) {
+            url += "&location=" + jlab.wfb.locationSelections[i];
+        }
     }
-    if (jlab.wfb.minCF !== "") {
-        url += "&minCF=" + jlab.wfb.minCF;
+
+    if (jlab.wfb.classificationSelections.length === 0) {
+        url += "&classification=";
+    } else {
+        for (var i = 0; i < jlab.wfb.classificationSelections.length; i++) {
+            url += "&classification=" + jlab.wfb.locationSelections[i];
+        }
     }
+
+    url += "&minCF=" + jlab.wfb.minCF;
 
     // Update the current state of the window so that should a user navigate away, the back button will return them to the last currently displayed event.
     window.history.replaceState(null, null, url);
