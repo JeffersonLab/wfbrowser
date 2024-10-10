@@ -6,7 +6,7 @@ description "Waveform Viewer and Browsing App for CEBAF"
 group 'org.jlab'
 version '2.1.1'
 ext.releaseDate = 'May 3, 2024'
-ext.resourceNumber = '40'
+ext.resourceNumber = '41'
 ext.adminRole = 'wfb_admin'
 ext.postRole = 'wfb_data'
 
