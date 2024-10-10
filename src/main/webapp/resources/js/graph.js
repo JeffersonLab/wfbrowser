@@ -953,6 +953,27 @@ jlab.wfb.makeTimeline = function (container, groups, items) {
     return timeline;
 };
 
+/** To avoid additional redirects, we need to make sure all of the query parameters are supplied, even if empty.  Also,
+ * we need to update the eventId to match the current selection if the user has changed that using on screen controls.
+ */
+jlab.wfb.autofillFormDefaults = function() {
+    // Set select inputs to blank if null.  HTTP endpoint will do a redirect to URL with empty params if missing.
+    [jlab.wfb.$seriesSelector, jlab.wfb.$seriesSetSelector, jlab.wfb.$locationSelector,
+        jlab.wfb.$classificationSelector].forEach(function(selector){
+        console.log(selector);
+        console.log("" + selector.val());
+        if (selector.val() === null) {
+            selector.val("");
+            selector.change();
+        }
+    });
+
+    // Set the form to the currently selected event ID.  Otherwise we will override what is currently displayed with
+    // what was last requested via HTTP.
+    $("#event-id-input").val(jlab.wfb.currentEvent.id.toString());
+    $("#event-id-input").change();
+}
+
 jlab.wfb.validateForm = function () {
     var $err = $("#page-controls-error");
     $err.empty();
@@ -1019,6 +1040,7 @@ $(function () {
         $helpDialog.toggle({duration: 0});
     });
 
+    $("#page-controls-submit").on("click", jlab.wfb.autofillFormDefaults);
     $("#page-controls-submit").on("click", jlab.wfb.validateForm);
 
     // Setup the groups for the timeline
