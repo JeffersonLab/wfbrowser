@@ -960,8 +960,6 @@ jlab.wfb.autofillFormDefaults = function() {
     // Set select inputs to blank if null.  HTTP endpoint will do a redirect to URL with empty params if missing.
     [jlab.wfb.$seriesSelector, jlab.wfb.$seriesSetSelector, jlab.wfb.$locationSelector,
         jlab.wfb.$classificationSelector].forEach(function(selector){
-        console.log(selector);
-        console.log("" + selector.val());
         if (selector.val() === null) {
             selector.val("");
             selector.change();
