@@ -564,7 +564,7 @@ jlab.wfb.loadNewGraphs = (function () {
                 traditional: true
             });
 
-            promise.error(function (xhr, textStatus) {
+            promise.fail(function (xhr, textStatus) {
                 var json;
 
                 try {

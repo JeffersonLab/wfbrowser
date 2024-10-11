@@ -11,23 +11,13 @@
 <%@attribute name="secondaryNavigation" fragment="true" %>
 <c:url var="domainRelativeReturnUrl" scope="request" context="/" value="${requestScope['javax.servlet.forward.request_uri']}${requestScope['javax.servlet.forward.query_string'] ne null ? '?'.concat(requestScope['javax.servlet.forward.query_string']) : ''}"/>
 <c:set var="currentPath" scope="request" value="${requestScope['javax.servlet.forward.servlet_path']}"/>
-<s:tabbed-page title="${title}" category="">
+<s:tabbed-page title="${title}" category="${category}">
     <jsp:attribute name="stylesheets">
         <link rel="shortcut icon" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/img/favicon.ico"/>
-        <link rel="stylesheet" type="text/css" href="${initParam.cdnContextPath}/jquery-ui/1.10.3/theme/smoothness/jquery-ui.min.css"/>
-        <link rel="stylesheet" type="text/css" href="${initParam.cdnContextPath}/jquery-plugins/timepicker/jquery-ui-timepicker-1.3.1.css"/>
-        <link rel="stylesheet" type="text/css" href="${initParam.cdnContextPath}/jquery-plugins/select2/3.5.2/select2.css"/>
-        <link rel="stylesheet" type="text/css" href="${initParam.cdnContextPath}/jlab-theme/smoothness/1.6/css/smoothness.min.css"/>
         <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/wfbrowser.css"/>
         <jsp:invoke fragment="stylesheets"/>
     </jsp:attribute>
     <jsp:attribute name="scripts">
-        <script type="text/javascript" src="${initParam.cdnContextPath}/jquery/1.10.2.min.js"></script>
-        <script type="text/javascript" src="${initParam.cdnContextPath}/jquery-ui/1.10.3/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="${initParam.cdnContextPath}/uri/uri-1.14.1.min.js"></script>
-        <script type="text/javascript" src="${initParam.cdnContextPath}/jquery-plugins/timepicker/jquery-ui-timepicker-1.3.1.js"></script>
-        <script type="text/javascript" src="${initParam.cdnContextPath}/jquery-plugins/select2/3.5.2/select2.min.js"></script>
-        <script type="text/javascript" src="${initParam.cdnContextPath}/jlab-theme/smoothness/1.6/js/smoothness.min.js"></script>
         <script type="text/javascript">
             jlab.contextPath = "${pageContext.request.contextPath}";
             // THIS VARIABLE SHOULD ONLY BE USED FOR UI PURPOSES AND NOT FOR ANY REAL SECURITY
