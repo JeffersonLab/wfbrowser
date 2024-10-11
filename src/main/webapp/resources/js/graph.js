@@ -957,9 +957,13 @@ jlab.wfb.makeTimeline = function (container, groups, items) {
  * we need to update the eventId to match the current selection if the user has changed that using on screen controls.
  */
 jlab.wfb.autofillFormDefaults = function() {
+    let $err = $("#page-controls-error");
+    if ($err.content.length > 0) {
+        return false
+    }
     // Set select inputs to blank if null.  HTTP endpoint will do a redirect to URL with empty params if missing.
     [jlab.wfb.$seriesSelector, jlab.wfb.$seriesSetSelector, jlab.wfb.$locationSelector,
-        jlab.wfb.$classificationSelector].forEach(function(selector){
+        jlab.wfb.$classificationSelector].forEach(function (selector) {
         // Earlier versions of select2 returned null, later versions returned empty array.  Leaving both to catch future
         // changes since this was unexpected.
         if (selector.val() === null || selector.val().length === 0) {
@@ -970,22 +974,29 @@ jlab.wfb.autofillFormDefaults = function() {
 
     // Set the form to the currently selected event ID.  Otherwise we will override what is currently displayed with
     // what was last requested via HTTP.
-    $("#event-id-input").val(jlab.wfb.currentEvent.id.toString());
-    $("#event-id-input").change();
-}
+    if (jlab.wfb.currentEvent != null && jlab.wfb.currentEvent.id != null) {
+        $("#event-id-input").val(jlab.wfb.currentEvent.id.toString());
+        $("#event-id-input").change();
+    }
+
+    return true
+};
 
 jlab.wfb.validateForm = function () {
     var $err = $("#page-controls-error");
     $err.empty();
 
+
     // Make sure that we will have some sort of series to display in the graphs
-    if (jlab.wfb.$seriesSelector.val() === null && jlab.wfb.$seriesSetSelector.val() === null) {
+    if ((jlab.wfb.$seriesSelector.val() === null || jlab.wfb.$seriesSelector.val().length === 0 || jlab.wfb.$seriesSelector.val()[0] === "")
+        && (jlab.wfb.$seriesSetSelector.val() === null || jlab.wfb.$seriesSetSelector.val().length === 0 || jlab.wfb.$seriesSetSelector.val()[0] === "")) {
         $err.append("At least one series or series set must be supplied.");
         return false;
     }
 
     // Make sure that the timeline will have some sort of location to show and that we will have a group of events to pick from
-    if (jlab.wfb.$locationSelector.val() === null) {
+    if (jlab.wfb.$locationSelector.val() === null || jlab.wfb.$locationSelector.val().length === 0
+        || jlab.wfb.$locationSelector.val()[0] === "") {
         $err.append("At least one zone must be supplied.");
         return false;
     }
@@ -1042,8 +1053,8 @@ $(function () {
         $helpDialog.toggle({duration: 0});
     });
 
-    $("#page-controls-submit").on("click", jlab.wfb.autofillFormDefaults);
     $("#page-controls-submit").on("click", jlab.wfb.validateForm);
+    $("#page-controls-submit").on("click", jlab.wfb.autofillFormDefaults);
 
     // Setup the groups for the timeline
     var groupArray = new Array(jlab.wfb.locationSelections.length);
