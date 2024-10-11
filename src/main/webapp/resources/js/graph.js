@@ -960,7 +960,9 @@ jlab.wfb.autofillFormDefaults = function() {
     // Set select inputs to blank if null.  HTTP endpoint will do a redirect to URL with empty params if missing.
     [jlab.wfb.$seriesSelector, jlab.wfb.$seriesSetSelector, jlab.wfb.$locationSelector,
         jlab.wfb.$classificationSelector].forEach(function(selector){
-        if (selector.val() === null) {
+        // Earlier versions of select2 returned null, later versions returned empty array.  Leaving both to catch future
+        // changes since this was unexpected.
+        if (selector.val() === null || selector.val().length === 0) {
             selector.val("");
             selector.change();
         }
@@ -1017,7 +1019,9 @@ jlab.wfb.validateForm = function () {
 $(function () {
 
     var select2Options = {
-        width: "15em"
+        width: "15em",
+        closeOnSelect: false,
+        multiple: true
     };
     jlab.wfb.$seriesSelector.select2(select2Options);
     jlab.wfb.$seriesSetSelector.select2(select2Options);
