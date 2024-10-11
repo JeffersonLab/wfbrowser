@@ -463,11 +463,14 @@ public class GraphConfig {
                     + system + "'");
         }
 
-        if (other.locations != null && !Objects.equals(locations, other.locations)) {
+        // Doesnnt make sense to be empty.  We don't want to allow override with an empty list.
+        if (other.locations != null && !other.locations.isEmpty() && !Objects.equals(locations, other.locations)) {
             locations = other.locations;
             update = true;
         }
-        if (other.classifications != null && !Objects.equals(classifications, other.classifications)) {
+        // Doesnnt make sense to be empty.  We don't want to allow override with an empty list.
+        if (other.classifications != null && !other.classifications.isEmpty()
+                && !Objects.equals(classifications, other.classifications)) {
             classifications = other.classifications;
             update = true;
         }

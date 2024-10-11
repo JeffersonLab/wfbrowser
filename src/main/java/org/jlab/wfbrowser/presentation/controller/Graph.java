@@ -85,26 +85,27 @@ public class Graph extends HttpServlet {
          */
         HttpSession session = request.getSession();
 
-        // Get the default config for this system
-        GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
+        // Get the default config for this system.  The config we use will start with defaults, then be overridden by
+        // the session config and finally, the config based on the actual request.
+        GraphConfig graphConfig = GraphConfig.getDefaultConfig(system);
         if (system == null) {
-            system = defaultGraphConfig.getSystem();
+            system = graphConfig.getSystem();
         }
 
         // Set up the session
         setupSession(system, request);
 
-        // Process selections compared with their viable options
-        List<Series> seriesOptions = defaultGraphConfig.getSeriesOptions();
+        // Process selections compared with their viable options.  Still contains default values at this point.
+        List<Series> seriesOptions = graphConfig.getSeriesOptions();
         Set<Series> seriesSelections = initializeSeriesSelections(serSel, seriesOptions);
 
-        List<SeriesSet> seriesSetOptions = defaultGraphConfig.getSeriesSetOptions();
+        List<SeriesSet> seriesSetOptions = graphConfig.getSeriesSetOptions();
         Set<SeriesSet> seriesSetSelections = initializeSeriesSetSelections(serSetSel, seriesSetOptions);
 
-        List<String> locationOptions = defaultGraphConfig.getLocationOptions();
+        List<String> locationOptions = graphConfig.getLocationOptions();
         Set<String> locationSelections = keepOnlyMatches(locSel, locationOptions);
 
-        List<String> classificationOptions = defaultGraphConfig.getClassificationOptions();
+        List<String> classificationOptions = graphConfig.getClassificationOptions();
         Set<String> classificationSelections = keepOnlyMatches(classSel, classificationOptions);
 
         Long eId = (eventId == null || eventId.isEmpty()) ? null : Long.parseLong(eventId);
@@ -128,8 +129,13 @@ public class Graph extends HttpServlet {
             Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
             GraphConfig sessionGraphConfig = gcMap.get(system);
 
-            // Update the session with the currently requested values
-            sessionGraphConfig.overwriteWith(requestGraphConfig);
+            // graphConfig starts with defaults, overwritten by saved session state, overwritten by recently requested
+            // options.  The final config then gets put back to the session state.  Work with the session after this
+            // since it is now the right config and it will persist.  Some changes may be made to the event that is
+            // displayed for example.
+            graphConfig.overwriteWith(sessionGraphConfig);
+            graphConfig.overwriteWith(requestGraphConfig);
+            sessionGraphConfig.overwriteWith((graphConfig));
 
             // Overwrite the graph configuration variables with the finals values after merging session and request
             // versions.
