@@ -364,6 +364,23 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
         fftOpts.xlabel = "Frequency (Hz)";
         fftOpts.ylable = "FFT Magnitude";
         fftOpts.labelsDiv = document.getElementById("graph-chart-fft-legend");
+        fftOpts.legendFormatter = function (data) {
+            if (data.x == null) {
+                // This happens when there's no selection and {legend: 'always'} is set.
+                return data.series.map(function (series) {
+                    return series.dashHTML +
+                        ' <span style="font-weight: bold; color: ' + series.color + '">' + series.labelHTML + '</span>'
+                }).join(' ');
+            }
+
+            let html = 'Freq: ' + math.round(data.xHTML, 2);
+            data.series.forEach(function (series) {
+                if (!series.isVisible) return;
+                let labeledData = series.labelHTML + ': ' + math.round(series.yHTML, 2);
+                html += '<br>' + series.dashHTML + ' ' + labeledData;
+            });
+            return html;
+        };
 
         // Without the very brief sleep, the dialog does not open until the FFT is done and the graph is displayed.
         // This can take several seconds depending on the number and exact length of signals sent through FFT.
