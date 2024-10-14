@@ -195,6 +195,14 @@
                                     </select>
                                 </div>
                             </li>
+                            <c:if test="${requestScope.system == 'rf'}">
+                            <li>
+                                <div class="li-key"></div>
+                                <div class="li-value">
+                                        <button type="button" id="all-zone-btn">All</button><button type="button" id="none-zone-btn">None</button><button type="button" id="nl-zone-btn">NL</button><button type="button" id="sl-zone-btn">SL</button>
+                                </div>
+                            </li>
+                            </c:if>
                         </ul>
                         <c:if test="${requestScope.classificationMap.size() > 0}">
                             <ul class="key-value-list">

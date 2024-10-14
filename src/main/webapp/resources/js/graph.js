@@ -1043,6 +1043,53 @@ jlab.wfb.validateForm = function () {
     return true;
 };
 
+/**
+ * Attach actions to the zone selection buttons (all, none, sl, nl).  Assumes that the buttons are present, but this is
+ * likely only true for the RF system.
+ */
+jlab.wfb.attachZoneSelectorButtons = function(){
+    let $allBtn = $("#all-zone-btn");
+    let $noneBtn = $("#none-zone-btn");
+    let $nlBtn = $("#nl-zone-btn");
+    let $slBtn = $("#sl-zone-btn");
+
+    let options = jlab.wfb.$locationSelector.find("option");
+
+    $allBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value !== "") {
+            selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+    $noneBtn.on("click", () => {
+        jlab.wfb.$locationSelector.val([]);
+        jlab.wfb.$locationSelector.change();
+    });
+    $nlBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value.startsWith("1L") ) {
+                selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+    $slBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value.startsWith("2L") ) {
+                selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+};
 
 $(function () {
 
@@ -1056,6 +1103,9 @@ $(function () {
     jlab.wfb.$locationSelector.select2(select2Options);
     if (jlab.wfb.classificationMap.size > 0) {
         jlab.wfb.$classificationSelector.select2(select2Options);
+    }
+    if (jlab.wfb.system === "rf") {
+        jlab.wfb.attachZoneSelectorButtons();
     }
     jlab.wfb.$startPicker.val(jlab.wfb.begin);
     jlab.wfb.$endPicker.val(jlab.wfb.end);
