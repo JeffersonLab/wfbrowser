@@ -180,7 +180,7 @@
                         <tbody>
                         <c:forEach var="event" items="${eventList}">
                             <tr>
-                                <td><a href="${pageContext.request.contextPath}/graph?eventId=${event.eventId}">View</span></a></td>
+                                <td><a href="${pageContext.request.contextPath}/graph?eventId=${event.eventId}&classification=${event.classification}">View</span></a></td>
                                 <td>${event.eventTimeStringLocal}</td>
                                 <td>${event.location}</td>
                                 <c:choose>

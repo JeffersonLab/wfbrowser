@@ -364,6 +364,23 @@ jlab.wfb.makeGraph = function (event, chartId, $graphPanel, graphOptions, series
         fftOpts.xlabel = "Frequency (Hz)";
         fftOpts.ylable = "FFT Magnitude";
         fftOpts.labelsDiv = document.getElementById("graph-chart-fft-legend");
+        fftOpts.legendFormatter = function (data) {
+            if (data.x == null) {
+                // This happens when there's no selection and {legend: 'always'} is set.
+                return data.series.map(function (series) {
+                    return series.dashHTML +
+                        ' <span style="font-weight: bold; color: ' + series.color + '">' + series.labelHTML + '</span>'
+                }).join(' ');
+            }
+
+            let html = 'Freq: ' + math.round(data.xHTML, 2);
+            data.series.forEach(function (series) {
+                if (!series.isVisible) return;
+                let labeledData = series.labelHTML + ': ' + math.round(series.yHTML, 2);
+                html += '<br>' + series.dashHTML + ' ' + labeledData;
+            });
+            return html;
+        };
 
         // Without the very brief sleep, the dialog does not open until the FFT is done and the graph is displayed.
         // This can take several seconds depending on the number and exact length of signals sent through FFT.
@@ -465,18 +482,39 @@ jlab.wfb.updateBrowserUrlAndControls = function () {
         + "&end=" + jlab.wfb.end.replace(/ /, '+').encodeXml()
         + "&eventId=" + jlab.wfb.currentEvent.id
         + "&system=" + jlab.wfb.system;
-    for (var i = 0; i < jlab.wfb.seriesSelections.length; i++) {
-        url += "&series=" + jlab.wfb.seriesSelections[i];
+    if (jlab.wfb.seriesSelections.length === 0){
+        url += "&series=";
+    } else {
+        for (var i = 0; i < jlab.wfb.seriesSelections.length; i++) {
+            url += "&series=" + jlab.wfb.seriesSelections[i];
+        }
     }
-    for (var i = 0; i < jlab.wfb.seriesSetSelections.length; i++) {
-        url += "&seriesSet=" + jlab.wfb.seriesSetSelections[i];
+
+    if (jlab.wfb.seriesSetSelections.length === 0) {
+        url += "&seriesSet=";
+    } else {
+        for (var i = 0; i < jlab.wfb.seriesSetSelections.length; i++) {
+            url += "&seriesSet=" + jlab.wfb.seriesSetSelections[i];
+        }
     }
-    for (var i = 0; i < jlab.wfb.locationSelections.length; i++) {
-        url += "&location=" + jlab.wfb.locationSelections[i];
+
+    if (jlab.wfb.locationSelections.length === 0) {
+        url += "&location=";
+    } else {
+        for (var i = 0; i < jlab.wfb.locationSelections.length; i++) {
+            url += "&location=" + jlab.wfb.locationSelections[i];
+        }
     }
-    if (jlab.wfb.minCF !== "") {
-        url += "&minCF=" + jlab.wfb.minCF;
+
+    if (jlab.wfb.classificationSelections.length === 0) {
+        url += "&classification=";
+    } else {
+        for (var i = 0; i < jlab.wfb.classificationSelections.length; i++) {
+            url += "&classification=" + jlab.wfb.locationSelections[i];
+        }
     }
+
+    url += "&minCF=" + jlab.wfb.minCF;
 
     // Update the current state of the window so that should a user navigate away, the back button will return them to the last currently displayed event.
     window.history.replaceState(null, null, url);
@@ -543,7 +581,7 @@ jlab.wfb.loadNewGraphs = (function () {
                 traditional: true
             });
 
-            promise.error(function (xhr, textStatus) {
+            promise.fail(function (xhr, textStatus) {
                 var json;
 
                 try {
@@ -932,18 +970,50 @@ jlab.wfb.makeTimeline = function (container, groups, items) {
     return timeline;
 };
 
+/** To avoid additional redirects, we need to make sure all of the query parameters are supplied, even if empty.  Also,
+ * we need to update the eventId to match the current selection if the user has changed that using on screen controls.
+ */
+jlab.wfb.autofillFormDefaults = function() {
+    let $err = $("#page-controls-error");
+    if ($err.content.length > 0) {
+        return false
+    }
+    // Set select inputs to blank if null.  HTTP endpoint will do a redirect to URL with empty params if missing.
+    [jlab.wfb.$seriesSelector, jlab.wfb.$seriesSetSelector, jlab.wfb.$locationSelector,
+        jlab.wfb.$classificationSelector].forEach(function (selector) {
+        // Earlier versions of select2 returned null, later versions returned empty array.  Leaving both to catch future
+        // changes since this was unexpected.
+        if (selector.val() === null || selector.val().length === 0) {
+            selector.val("");
+            selector.change();
+        }
+    });
+
+    // Set the form to the currently selected event ID.  Otherwise we will override what is currently displayed with
+    // what was last requested via HTTP.
+    if (jlab.wfb.currentEvent != null && jlab.wfb.currentEvent.id != null) {
+        $("#event-id-input").val(jlab.wfb.currentEvent.id.toString());
+        $("#event-id-input").change();
+    }
+
+    return true
+};
+
 jlab.wfb.validateForm = function () {
     var $err = $("#page-controls-error");
     $err.empty();
 
+
     // Make sure that we will have some sort of series to display in the graphs
-    if (jlab.wfb.$seriesSelector.val() === null && jlab.wfb.$seriesSetSelector.val() === null) {
+    if ((jlab.wfb.$seriesSelector.val() === null || jlab.wfb.$seriesSelector.val().length === 0 || jlab.wfb.$seriesSelector.val()[0] === "")
+        && (jlab.wfb.$seriesSetSelector.val() === null || jlab.wfb.$seriesSetSelector.val().length === 0 || jlab.wfb.$seriesSetSelector.val()[0] === "")) {
         $err.append("At least one series or series set must be supplied.");
         return false;
     }
 
     // Make sure that the timeline will have some sort of location to show and that we will have a group of events to pick from
-    if (jlab.wfb.$locationSelector.val() === null) {
+    if (jlab.wfb.$locationSelector.val() === null || jlab.wfb.$locationSelector.val().length === 0
+        || jlab.wfb.$locationSelector.val()[0] === "") {
         $err.append("At least one zone must be supplied.");
         return false;
     }
@@ -973,17 +1043,69 @@ jlab.wfb.validateForm = function () {
     return true;
 };
 
+/**
+ * Attach actions to the zone selection buttons (all, none, sl, nl).  Assumes that the buttons are present, but this is
+ * likely only true for the RF system.
+ */
+jlab.wfb.attachZoneSelectorButtons = function(){
+    let $allBtn = $("#all-zone-btn");
+    let $noneBtn = $("#none-zone-btn");
+    let $nlBtn = $("#nl-zone-btn");
+    let $slBtn = $("#sl-zone-btn");
+
+    let options = jlab.wfb.$locationSelector.find("option");
+
+    $allBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value !== "") {
+            selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+    $noneBtn.on("click", () => {
+        jlab.wfb.$locationSelector.val([]);
+        jlab.wfb.$locationSelector.change();
+    });
+    $nlBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value.startsWith("1L") ) {
+                selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+    $slBtn.on("click", () => {
+        let selections = [];
+        options.map((key, val) => {
+            if (val.value.startsWith("2L") ) {
+                selections.push(val.value);
+            }
+        });
+        jlab.wfb.$locationSelector.val(selections);
+        jlab.wfb.$locationSelector.change();
+    });
+};
 
 $(function () {
 
     var select2Options = {
-        width: "15em"
+        width: "15em",
+        closeOnSelect: false,
+        multiple: true
     };
     jlab.wfb.$seriesSelector.select2(select2Options);
     jlab.wfb.$seriesSetSelector.select2(select2Options);
     jlab.wfb.$locationSelector.select2(select2Options);
     if (jlab.wfb.classificationMap.size > 0) {
         jlab.wfb.$classificationSelector.select2(select2Options);
+    }
+    if (jlab.wfb.system === "rf") {
+        jlab.wfb.attachZoneSelectorButtons();
     }
     jlab.wfb.$startPicker.val(jlab.wfb.begin);
     jlab.wfb.$endPicker.val(jlab.wfb.end);
@@ -999,6 +1121,7 @@ $(function () {
     });
 
     $("#page-controls-submit").on("click", jlab.wfb.validateForm);
+    $("#page-controls-submit").on("click", jlab.wfb.autofillFormDefaults);
 
     // Setup the groups for the timeline
     var groupArray = new Array(jlab.wfb.locationSelections.length);

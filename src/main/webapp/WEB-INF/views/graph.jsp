@@ -6,7 +6,7 @@
 <c:set var="title" value="Graph - ${requestScope.systemDisplay}"/>
 <t:page title="${title}">  
     <jsp:attribute name="stylesheets">
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.1.0.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.2.1.css" />
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/vis.min.css">
         <style>
             form fieldset {
@@ -122,7 +122,7 @@
         </style>
     </jsp:attribute>
     <jsp:attribute name="scripts">
-        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.1.0.min.js"></script>
+        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.2.1.min.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-synchronizer.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-crosshair.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/math.12.4.2.js"></script>
@@ -188,12 +188,21 @@
                                 <div class="li-key"><label class="required-field" for="locations" title="Include on the following locations.">Zone</label></div>
                                 <div class="li-value">
                                     <select id="location-selector" name="location" multiple>
+                                        <option value="" label="" hidden></option>
                                         <c:forEach var="location" items="${requestScope.locationMap}">
                                             <option value="${location.key}" label="${location.key}" <c:if test="${location.value}">selected</c:if>>${location.key}</option>
                                         </c:forEach>
                                     </select>
                                 </div>
                             </li>
+                            <c:if test="${requestScope.system == 'rf'}">
+                            <li>
+                                <div class="li-key"></div>
+                                <div class="li-value">
+                                        <button type="button" id="all-zone-btn">All</button><button type="button" id="none-zone-btn">None</button><button type="button" id="nl-zone-btn">NL</button><button type="button" id="sl-zone-btn">SL</button>
+                                </div>
+                            </li>
+                            </c:if>
                         </ul>
                         <c:if test="${requestScope.classificationMap.size() > 0}">
                             <ul class="key-value-list">
@@ -201,6 +210,7 @@
                                     <div class="li-key"><label for="classification" title="Include only events with the following classification(s).  Empty implies no filter">Classification</label></div>
                                     <div class="li-value">
                                         <select id="classification-selector" name="classification" multiple>
+                                            <option value="" label="" hidden></option>
                                             <c:forEach var="cls" items="${requestScope.classificationMap}">
                                                 <option value="${cls.key}" label="${cls.key}" <c:if test="${cls.value}">selected</c:if>>${cls.key}</option>
                                             </c:forEach>
@@ -229,6 +239,7 @@
                                 <div class="li-key"><label for="series" title="Show charts for these series below.">Series</label></div>
                                 <div class="li-value">
                                     <select id="series-selector" name="series" multiple>
+                                        <option value="" label="" hidden></option>
                                         <c:forEach var="series" items="${requestScope.seriesMap}">
                                             <option value="${series.key}" label="${series.key}" <c:if test="${series.value}">selected</c:if>>${series.key}</option>
                                         </c:forEach>
@@ -241,6 +252,7 @@
                                 <div class="li-key"><label for="series-sets" title="Show charts for these named sets of series below.">Series Sets</label></div>
                                 <div class="li-value">
                                     <select id="series-set-selector" name="seriesSet" multiple>
+                                        <option value="" label="" hidden></option>
                                         <c:forEach var="seriesSet" items="${requestScope.seriesSetMap}">
                                             <option value="${seriesSet.key}" label="${seriesSet.key}" <c:if test="${seriesSet.value}">selected</c:if>>${seriesSet.key}</option>
                                         </c:forEach>
@@ -248,6 +260,7 @@
                                 </div>
                             </li>
                         </ul>
+                    <input type="hidden" id="event-id-input" name="eventId" value="${eventId}"/>
                     </fieldset>
                     <input id="page-controls-submit" type="submit" value="Submit"/><span id="page-controls-error"></span>
                 </fieldset>
@@ -272,6 +285,7 @@
             jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'${seriesSet}'<c:if test="${!status.last}">,</c:if></c:forEach>];
             jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
 
+            jlab.wfb.classificationSelections = [<c:forEach var="classification" items="${classificationSelections}" varStatus="status">'${classification}'<c:if test="${!status.last}">,</c:if></c:forEach>];
             jlab.wfb.classificationMap = new Map();
             <c:forEach var="classification" items="${requestScope.classificationMap}">
                 jlab.wfb.classificationMap.set("${classification.key}", ${classification.value});
