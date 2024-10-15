@@ -6,7 +6,7 @@
 <c:set var="title" value="RF Fault Summary"/>
 <t:report-page title="${title}">
     <jsp:attribute name="stylesheets">
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.1.0.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.2.1.css" />
         <style>
             /*Plotly svg element has some overhang on initial draw.  This 99% helps hide that fact.*/
             .dotplot-container {
@@ -59,7 +59,7 @@
         </style>
     </jsp:attribute>
     <jsp:attribute name="scripts">
-        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.1.0.min.js"></script>
+        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.2.1.min.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-synchronizer.js"></script>
         <script type="text/javascript"
                 src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/plotly-v1.50.1.min.js"></script>
@@ -102,8 +102,18 @@
             jlab.wfb.ready_callback = function () {
                 var dp_div = document.getElementById("dotplot-panel");
                 var hm_div = document.getElementById("heatmaps-container");
-                jlab.wfb.create_plots(jlab.wfb.events, dp_div, hm_div, jlab.wfb.isLabeled, jlab.wfb.heatmap,
-                    jlab.wfb.timeline, jlab.wfb.locationSelections, jlab.wfb.begin, jlab.wfb.end);
+                var hm_panel = document.getElementById("heatmaps-panel");
+                if (jlab.wfb.events !== null && jlab.wfb.events.events.length > 0) {
+                    jlab.wfb.create_plots(jlab.wfb.events, dp_div, hm_div, jlab.wfb.isLabeled, jlab.wfb.heatmap,
+                        jlab.wfb.timeline, jlab.wfb.locationSelections, jlab.wfb.begin, jlab.wfb.end);
+                } else {
+                    let msg = document.createElement("div");
+                    msg.textContent = "No Data Available";
+                    msg.style.textAlign = "center";
+                    msg.style.width = "100%";
+                    msg.style.paddingTop = '10px';
+                    hm_panel.append(msg);
+                }
                 var done_span = document.createElement("span");
                 done_span.classList.add("done");
                 document.body.appendChild(done_span);
