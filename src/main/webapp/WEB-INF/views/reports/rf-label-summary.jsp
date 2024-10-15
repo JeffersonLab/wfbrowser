@@ -127,14 +127,14 @@
                 <legend>Report Controls</legend>
                 <ul class="key-value-list">
                     <li>
-                        <div class="li-key"><label class="required-field" for="begin" title="Earliest time to display">Start
+                        <div class="li-key"><label class="required-field" for="start-date-picker" title="Earliest time to display">Start
                             Time</label>
                         </div>
                         <div class="li-value"><input type="text" id="start-date-picker" class="date-time-field"
                                                      name="begin" placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
                     </li>
                     <li>
-                        <div class="li-key"><label class="required-field" for="end"
+                        <div class="li-key"><label class="required-field" for="end-date-picker"
                                                    title="Latest time to display.">End Time</label></div>
                         <div class="li-value"><input type="text" id="end-date-picker" class="date-time-field" name="end"
                                                      placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
@@ -142,13 +142,13 @@
                 </ul>
                 <ul class="key-value-list">
                     <li>
-                        <div class="li-key"><label class="required-field" for="locations"
+                        <div class="li-key"><label class="required-field" for="location-selector"
                                                    title="Include on the following locations.">Zone</label></div>
                         <div class="li-value">
                             <select id="location-selector" name="location" multiple>
                                 <c:forEach var="location" items="${requestScope.locationSelectionMap}">
-                                    <option value="${location.key}" label="${location.key}"
-                                            <c:if test="${location.value}">selected</c:if>>${location.key}</option>
+                                    <option value="<c:out value="${location.key}"/>" label="<c:out value="${location.key}"/>"
+                                            <c:if test="${location.value}">selected</c:if>><c:out value="${location.key}"/></option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -217,7 +217,7 @@
             jlab.wfb.isLabeled = ${requestScope.isLabeled};
             jlab.wfb.begin = "${requestScope.beginString}";
             jlab.wfb.end = "${requestScope.endString}";
-            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">, </c:if></c:forEach>];
+            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">"<c:out value="${location}"/>"<c:if test="${!status.last}">, </c:if></c:forEach>];
         </script>
     </jsp:body>
 </t:report-page>
