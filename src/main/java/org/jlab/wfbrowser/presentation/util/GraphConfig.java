@@ -386,7 +386,13 @@ public class GraphConfig {
                     }
                     if (locations != null) {
                         for (String l : locations) {
-                            out.put(l, true);
+                            if (out.containsKey(l)) {
+                                out.put(l, true);
+                            } else {
+                                if (!l.isEmpty()) {
+                                    LOGGER.warning("Received unknown location: " + l);
+                                }
+                            }
                         }
                     }
                 }
@@ -527,6 +533,29 @@ public class GraphConfig {
         }
 
         return update;
+    }
+
+    /**
+     * Convenience method for filtering out invalid choices.
+     *
+     * @param source An array of choices that may contain duplicates or invalid entries
+     * @param valid  An array of valid choices
+     * @return The Set of valid entries in source or null if no source or empty source was provided.
+     */
+    public static Set<String> keepOnlyMatches(String[] source, List<String> valid) {
+        // Create a list of the selections.  Only keep names that match valid options.
+        Set<String> keep = null;
+        if (source != null && source.length > 0) {
+            keep = new TreeSet<>();
+            for (String s : source) {
+                for (String v : valid) {
+                    if (s.equals((v))) {
+                        keep.add(s);
+                    }
+                }
+            }
+        }
+        return keep;
     }
 
 }
