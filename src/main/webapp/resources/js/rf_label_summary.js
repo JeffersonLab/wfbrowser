@@ -49,7 +49,6 @@ const doubleClickZoomOutPlugin = {
         const initialValueRange = g.getOption('valueRange');
         return {
             dblclick: function (e) {
-                console.log(g.getOption("valueRange"), g.getOption("axes"));
                 e.dygraph.updateOptions({
                     dateWindow: null,  // zoom all the way out
                     axes: {y: {valueRange: initialValueRange}}  // zoom to a specific y-axis range.
@@ -574,8 +573,6 @@ jlab.wfb.create_plots = function (event_data, dp_div, heatmap_div, labeled_only,
                                   begin, end) {
     var heatmaps = jlab.wfb.process_event_data_to_heatmaps(event_data, cavity_mapper, fault_mapper, labeled_only, facet_on, locations);
     jlab.wfb.plot_heatmaps(heatmap_div, heatmaps, cavity_mapper, fault_mapper);
-
-    console.log("HERE")
 
     if (timeline_mode == "single") {
         var cf_data = jlab.wfb.process_event_data(event_data, "fault", 'cavity', fault_mapper, cavity_mapper, labeled_only);
