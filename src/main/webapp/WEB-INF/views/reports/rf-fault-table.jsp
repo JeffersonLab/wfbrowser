@@ -54,7 +54,7 @@
             jlab.wfb.isLabeled = ${requestScope.isLabeled};
             jlab.wfb.begin = "${requestScope.beginString}";
             jlab.wfb.end = "${requestScope.endString}";
-            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">, </c:if></c:forEach>];
+            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'<c:out value="${location}"/>'<c:if test="${!status.last}">, </c:if></c:forEach>];
 
             // Function for processing control-form on submit
             var submitHandler = function () {
@@ -124,8 +124,8 @@
                         <div class="li-value">
                             <select id="location-selector" name="location" multiple>
                                 <c:forEach var="location" items="${requestScope.locationSelectionMap}">
-                                    <option value="${location.key}" label="${location.key}"
-                                            <c:if test="${location.value}">selected</c:if>>${location.key}</option>
+                                    <option value=<c:out value="${location.key}"/> label=<c:out value="${location.key}"/>
+                                            <c:if test="${location.value}">selected</c:if>><c:out value="${location.key}"/></option>
                                 </c:forEach>
                             </select>
                         </div>
