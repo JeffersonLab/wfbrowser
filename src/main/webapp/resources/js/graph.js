@@ -510,7 +510,7 @@ jlab.wfb.updateBrowserUrlAndControls = function () {
         url += "&classification=";
     } else {
         for (var i = 0; i < jlab.wfb.classificationSelections.length; i++) {
-            url += "&classification=" + jlab.wfb.locationSelections[i];
+            url += "&classification=" + jlab.wfb.classificationSelections[i];
         }
     }
 
