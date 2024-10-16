@@ -6,7 +6,7 @@
 <c:set var="title" value="RF Fault Summary"/>
 <t:report-page title="${title}">
     <jsp:attribute name="stylesheets">
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.1.0.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/css/dygraph.2.2.1.css" />
         <style>
             /*Plotly svg element has some overhang on initial draw.  This 99% helps hide that fact.*/
             .dotplot-container {
@@ -59,7 +59,7 @@
         </style>
     </jsp:attribute>
     <jsp:attribute name="scripts">
-        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.1.0.min.js"></script>
+        <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph.2.2.1.min.js"></script>
         <script type="text/javascript" src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/dygraph-synchronizer.js"></script>
         <script type="text/javascript"
                 src="${pageContext.request.contextPath}/resources/v${initParam.resourceVersionNumber}/js/plotly-v1.50.1.min.js"></script>
@@ -102,8 +102,18 @@
             jlab.wfb.ready_callback = function () {
                 var dp_div = document.getElementById("dotplot-panel");
                 var hm_div = document.getElementById("heatmaps-container");
-                jlab.wfb.create_plots(jlab.wfb.events, dp_div, hm_div, jlab.wfb.isLabeled, jlab.wfb.heatmap,
-                    jlab.wfb.timeline, jlab.wfb.locationSelections, jlab.wfb.begin, jlab.wfb.end);
+                var hm_panel = document.getElementById("heatmaps-panel");
+                if (jlab.wfb.events !== null && jlab.wfb.events.events.length > 0) {
+                    jlab.wfb.create_plots(jlab.wfb.events, dp_div, hm_div, jlab.wfb.isLabeled, jlab.wfb.heatmap,
+                        jlab.wfb.timeline, jlab.wfb.locationSelections, jlab.wfb.begin, jlab.wfb.end);
+                } else {
+                    let msg = document.createElement("div");
+                    msg.textContent = "No Data Available";
+                    msg.style.textAlign = "center";
+                    msg.style.width = "100%";
+                    msg.style.paddingTop = '10px';
+                    hm_panel.append(msg);
+                }
                 var done_span = document.createElement("span");
                 done_span.classList.add("done");
                 document.body.appendChild(done_span);
@@ -127,14 +137,14 @@
                 <legend>Report Controls</legend>
                 <ul class="key-value-list">
                     <li>
-                        <div class="li-key"><label class="required-field" for="begin" title="Earliest time to display">Start
+                        <div class="li-key"><label class="required-field" for="start-date-picker" title="Earliest time to display">Start
                             Time</label>
                         </div>
                         <div class="li-value"><input type="text" id="start-date-picker" class="date-time-field"
                                                      name="begin" placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
                     </li>
                     <li>
-                        <div class="li-key"><label class="required-field" for="end"
+                        <div class="li-key"><label class="required-field" for="end-date-picker"
                                                    title="Latest time to display.">End Time</label></div>
                         <div class="li-value"><input type="text" id="end-date-picker" class="date-time-field" name="end"
                                                      placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
@@ -142,13 +152,13 @@
                 </ul>
                 <ul class="key-value-list">
                     <li>
-                        <div class="li-key"><label class="required-field" for="locations"
+                        <div class="li-key"><label class="required-field" for="location-selector"
                                                    title="Include on the following locations.">Zone</label></div>
                         <div class="li-value">
                             <select id="location-selector" name="location" multiple>
                                 <c:forEach var="location" items="${requestScope.locationSelectionMap}">
-                                    <option value="${location.key}" label="${location.key}"
-                                            <c:if test="${location.value}">selected</c:if>>${location.key}</option>
+                                    <option value="<c:out value="${location.key}"/>" label="<c:out value="${location.key}"/>"
+                                            <c:if test="${location.value}">selected</c:if>><c:out value="${location.key}"/></option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -217,7 +227,7 @@
             jlab.wfb.isLabeled = ${requestScope.isLabeled};
             jlab.wfb.begin = "${requestScope.beginString}";
             jlab.wfb.end = "${requestScope.endString}";
-            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">, </c:if></c:forEach>];
+            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">"<c:out value="${location}"/>"<c:if test="${!status.last}">, </c:if></c:forEach>];
         </script>
     </jsp:body>
 </t:report-page>

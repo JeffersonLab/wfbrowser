@@ -36,15 +36,21 @@ public class RFLabelSummary extends HttpServlet {
         String isLabeledString = request.getParameter("isLabeled");
         String heatmap = request.getParameter("heatmap");
         String timeline = request.getParameter("timeline");
-        List<String> locationSelections = locationStrings == null ? null : new ArrayList<>(Arrays.asList(locationStrings));
         boolean isLabeled = Boolean.parseBoolean(isLabeledString);
 
         boolean redirectNeeded = false;
+        if ( beginString == null || beginString.isEmpty() || endString == null || endString.isEmpty()
+                || locationStrings == null || locationStrings.length == 0 || confString == null || confString.isEmpty()
+                || confOpString == null || confOpString.isEmpty() || isLabeledString == null
+                || isLabeledString.isEmpty() || heatmap == null || heatmap.isEmpty() || timeline == null
+                || timeline.isEmpty()) {
+            redirectNeeded = true;
+        }
+
         Double confidence;
         // If someone doesn't supply a confidence value, set it to 0.0.  This works permissively with the default confOp
         // of ">"
         if (confString == null || confString.isEmpty()) {
-            redirectNeeded = true;
             confString = "0.0";
             confidence = 0.0;
         } else {
@@ -52,7 +58,6 @@ public class RFLabelSummary extends HttpServlet {
         }
         // If someone supplied a confidence, but not an operator, assume a default operator of ">"
         if (confOpString == null) {
-            redirectNeeded = true;
             confOpString = ">";
         }
 
@@ -68,19 +73,23 @@ public class RFLabelSummary extends HttpServlet {
             timeline = "separate";
         }
 
-        Instant begin, end;
-        Map<String, Boolean> locationSelectionMap;
-        Set<String> locations = null;
-        if (locationSelections != null) {
-            locations = new HashSet<>(locationSelections);
+        // Start with the defaults and filter out any invalid locations.
+        String system = "rf";
+        GraphConfig graphConfig = GraphConfig.getDefaultConfig(system);
+        Set<String> locations = GraphConfig.keepOnlyMatches(locationStrings, graphConfig.getLocationOptions());
+        // Must have been some invalid locations or no location given in request
+        if (locationStrings != null && locations.size() != locationStrings.length) {
+            redirectNeeded = true;
         }
 
-        String system = "rf";
-        GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
+        // Here is a graph config object with only the requested parameters.
         GraphConfig requestGraphConfig = new GraphConfig(system, locations, null,
                 null, null, beginString, endString, null, null,
                 null, null, null, null);
 
+        Instant begin, end;
+        List<String> locationSelections;
+        Map<String, Boolean> locationSelectionMap;
         synchronized (SessionUtils.getSessionLock(request, null)) {
             HttpSession session = request.getSession();
 
@@ -90,10 +99,16 @@ public class RFLabelSummary extends HttpServlet {
                 gcMap = new HashMap<>();
                 session.setAttribute("graphConfigMap", gcMap);
             }
-            if (!gcMap.containsKey(system)) {
-                gcMap.put(system, defaultGraphConfig);
-                redirectNeeded = true;
+
+            // We want defaults, overwritten by session if it exists, overwritten by request params
+            if (gcMap.containsKey(system) && gcMap.get(system) != null) {
+                graphConfig.overwriteWith(gcMap.get(system));
             }
+            graphConfig.overwriteWith(requestGraphConfig);
+            gcMap.put(system, graphConfig);
+
+            // From here we work with the session graph config since it is the current master settings and is what will
+            // be used in future requests.
             GraphConfig sessionGraphConfig = gcMap.get(system);
             boolean updated = sessionGraphConfig.overwriteWith(requestGraphConfig);
             redirectNeeded = redirectNeeded || updated;
@@ -117,9 +132,13 @@ public class RFLabelSummary extends HttpServlet {
                 redirectUrl.append(URLEncoder.encode(confString, "UTF-8"));
                 redirectUrl.append("&confOp=");
                 redirectUrl.append(URLEncoder.encode(confOpString, "UTF-8"));
-                for (String location : locationSelections) {
+                if (locationSelections == null || locationSelections.isEmpty()) {
                     redirectUrl.append("&location=");
-                    redirectUrl.append(URLEncoder.encode(location, "UTF-8"));
+                } else {
+                    for (String location : locationSelections) {
+                        redirectUrl.append("&location=");
+                        redirectUrl.append(URLEncoder.encode(location, "UTF-8"));
+                    }
                 }
                 response.sendRedirect(response.encodeRedirectURL(redirectUrl.toString()));
                 return;
@@ -142,7 +161,7 @@ public class RFLabelSummary extends HttpServlet {
         }
 
 
-        request.setAttribute("events", es.convertEventListToJson(events, null).toString());
+        request.setAttribute("events", EventService.convertEventListToJson(events, null).toString());
         request.setAttribute("locationSelectionMap", locationSelectionMap);
         request.setAttribute("locationSelections", locationSelections);
         request.setAttribute("confString", confString);

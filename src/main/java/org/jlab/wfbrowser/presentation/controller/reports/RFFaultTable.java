@@ -39,16 +39,21 @@ public class RFFaultTable extends HttpServlet {
         String isLabeledString = request.getParameter("isLabeled");
         String out = request.getParameter("out");
 
-        List<String> locationSelections = locationStrings == null ? null : Arrays.asList(locationStrings);
+//        List<String> locationSelections = locationStrings == null ? null : Arrays.asList(locationStrings);
         boolean isLabeled = Boolean.parseBoolean(isLabeledString);
 
         boolean redirectNeeded = false;
+        if ( beginString == null || beginString.isEmpty() || endString == null || endString.isEmpty()
+                || locationStrings == null || locationStrings.length == 0 || confString == null || confString.isEmpty()
+                || confOpString == null || confOpString.isEmpty() || isLabeledString == null
+                || isLabeledString.isEmpty() || out == null) {
+            redirectNeeded = true;
+        }
 
         // If someone doesn't supply a confidence value, set it to 0.0.  This works permissively with the default confOp
         // of ">"
         Double confidence;
         if (confString == null || confString.isEmpty()) {
-            redirectNeeded = true;
             confString = "0.0";
             confidence = 0.0;
         } else {
@@ -56,36 +61,45 @@ public class RFFaultTable extends HttpServlet {
         }
         // If someone supplied a confidence, but not an operator, assume a default operator of ">"
         if (confOpString == null) {
-            redirectNeeded = true;
             confOpString = ">";
         }
 
-        Instant begin, end;
-        Map<String, Boolean> locationSelectionMap;
-        Set<String> locations = null;
-        if (locationSelections != null) {
-            locations = new HashSet<>(locationSelections);
+        // Start with the defaults and filter out any invalid locations.
+        String system = "rf";
+        GraphConfig graphConfig = GraphConfig.getDefaultConfig(system);
+        Set<String> locations = GraphConfig.keepOnlyMatches(locationStrings, graphConfig.getLocationOptions());
+        // Must have been some invalid locations or no location given in request
+        if (locationStrings != null && locations.size() != locationStrings.length) {
+            redirectNeeded = true;
         }
 
-        String system = "rf";
-        GraphConfig defaultGraphConfig = GraphConfig.getDefaultConfig(system);
+        // Here is a graph config object with only the requested parameters.
         GraphConfig requestGraphConfig = new GraphConfig(system, locations, null,
                 null, null, beginString, endString, null, null,
                 null, null, null, null);
 
-
-        HttpSession session = request.getSession();
+        Instant begin, end;
+        List<String> locationSelections;
+        Map<String, Boolean> locationSelectionMap;
         synchronized (SessionUtils.getSessionLock(request, null)) {
+            HttpSession session = request.getSession();
+
             @SuppressWarnings("unchecked")
             Map<String, GraphConfig> gcMap = (Map<String, GraphConfig>) session.getAttribute("graphConfigMap");
             if (gcMap == null) {
                 gcMap = new HashMap<>();
                 session.setAttribute("graphConfigMap", gcMap);
             }
-            if (!gcMap.containsKey(system)) {
-                gcMap.put(system, defaultGraphConfig);
-                redirectNeeded = true;
+
+            // We want defaults, overwritten by session if it exists, overwritten by request params
+            if (gcMap.containsKey(system) && gcMap.get(system) != null) {
+                graphConfig.overwriteWith(gcMap.get(system));
             }
+            graphConfig.overwriteWith(requestGraphConfig);
+            gcMap.put(system, graphConfig);
+
+            // From here we work with the session graph config since it is the current master settings and is what will
+            // be used in future requests.
             GraphConfig sessionGraphConfig = gcMap.get(system);
             boolean updated = sessionGraphConfig.overwriteWith(requestGraphConfig);
             redirectNeeded = redirectNeeded || updated;
@@ -101,10 +115,24 @@ public class RFFaultTable extends HttpServlet {
             if (redirectNeeded) {
                 StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/reports/rf-fault-table?" +
                         "begin=" + URLEncoder.encode(beginString, "UTF-8") +
-                        "&end=" + URLEncoder.encode(endString, "UTF-8"));
-                redirectUrl.append("&conf=").append(URLEncoder.encode(confString, "UTF-8")).append("&confOp=").append(URLEncoder.encode(confOpString, "UTF-8"));
-                for (String location : locationSelections) {
-                    redirectUrl.append("&location=").append(URLEncoder.encode(location, "UTF-8"));
+                        "&end=" + URLEncoder.encode(endString, "UTF-8") +
+                        "&conf=" + URLEncoder.encode(confidence.toString(), "UTF-8") +
+                        "&confOp=" + URLEncoder.encode(confOpString,"UTF-8") +
+                        "&isLabeled=" + URLEncoder.encode(Boolean.toString(isLabeled), "UTF-8"));
+                if (out == null) {
+                    redirectUrl.append("&out=");
+                } else {
+                    redirectUrl.append("&out=").append(URLEncoder.encode(out, "UTF-8"));
+                }
+                boolean locationAppended = false;
+                for (String location : locationSelectionMap.keySet()) {
+                    if (locationSelectionMap.get(location)) {
+                        locationAppended = true;
+                        redirectUrl.append("&location=").append(URLEncoder.encode(location, "UTF-8"));
+                    }
+                }
+                if (!locationAppended) {
+                    redirectUrl.append("&location=");
                 }
                 response.sendRedirect(response.encodeRedirectURL(redirectUrl.toString()));
                 return;
@@ -119,6 +147,7 @@ public class RFFaultTable extends HttpServlet {
 
             // Get the list of events that match both the event filters and the label confidence filter
             // Note: that filtering on label confidence implies that only labeled events will be returned
+            // confOpString get validated here.  Invalid confOpString should throw an exception.
             LabelFilter lf = new LabelFilter(null, null, null, confidence, confOpString);
             eventList = es.getEventListWithoutCaptureFiles(ef);
             List<Event> filteredList = lf.filterEvents(eventList);

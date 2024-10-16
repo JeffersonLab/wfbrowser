@@ -103,10 +103,16 @@ public class Graph extends HttpServlet {
         Set<SeriesSet> seriesSetSelections = initializeSeriesSetSelections(serSetSel, seriesSetOptions);
 
         List<String> locationOptions = graphConfig.getLocationOptions();
-        Set<String> locationSelections = keepOnlyMatches(locSel, locationOptions);
+        Set<String> locationSelections = GraphConfig.keepOnlyMatches(locSel, locationOptions);
+        if (locSel == null || (locationSelections.size() != locSel.length)) {
+            redirectNeeded = true;
+        }
 
         List<String> classificationOptions = graphConfig.getClassificationOptions();
-        Set<String> classificationSelections = keepOnlyMatches(classSel, classificationOptions);
+        Set<String> classificationSelections = GraphConfig.keepOnlyMatches(classSel, classificationOptions);
+        if (classSel == null || (classificationSelections.size() != classSel.length)) {
+            redirectNeeded = true;
+        }
 
         Long eId = (eventId == null || eventId.isEmpty()) ? null : Long.parseLong(eventId);
 
@@ -326,30 +332,6 @@ public class Graph extends HttpServlet {
         request.setAttribute("currentEvent", currentEvent == null ? "null" : currentEvent.toDyGraphJsonObject(seriesMasterSet).toString());
 
         request.getRequestDispatcher("/WEB-INF/views/graph.jsp").forward(request, response);
-    }
-
-
-    /**
-     * Convenience method for filtering out invalid choices.
-     *
-     * @param source An array of choices that may contain duplicates or invalid entries
-     * @param valid  An array of valid choices
-     * @return The Set of valid entries in source or null if no source or empty source was provided.
-     */
-    private Set<String> keepOnlyMatches(String[] source, List<String> valid) {
-        // Create a list of the selections.  Only keep names that match valid options.
-        Set<String> keep = null;
-        if (source != null && source.length > 0) {
-            keep = new TreeSet<>();
-            for (String s : source) {
-                for (String v : valid) {
-                    if (s.equals((v))) {
-                        keep.add(s);
-                    }
-                }
-            }
-        }
-        return keep;
     }
 
 
