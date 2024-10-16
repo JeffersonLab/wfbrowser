@@ -104,9 +104,15 @@ public class Graph extends HttpServlet {
 
         List<String> locationOptions = graphConfig.getLocationOptions();
         Set<String> locationSelections = GraphConfig.keepOnlyMatches(locSel, locationOptions);
+        if (locSel == null || (locationSelections.size() != locSel.length)) {
+            redirectNeeded = true;
+        }
 
         List<String> classificationOptions = graphConfig.getClassificationOptions();
         Set<String> classificationSelections = GraphConfig.keepOnlyMatches(classSel, classificationOptions);
+        if (classSel == null || (classificationSelections.size() != classSel.length)) {
+            redirectNeeded = true;
+        }
 
         Long eId = (eventId == null || eventId.isEmpty()) ? null : Long.parseLong(eventId);
 
