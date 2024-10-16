@@ -175,22 +175,22 @@
                         <legend>Timeline</legend>
                         <ul class="key-value-list">
                             <li>
-                                <div class="li-key"><label class="required-field" for="begin" title="Earliest time to display">Start</label></div>
+                                <div class="li-key"><label class="required-field" for="start-date-picker" title="Earliest time to display">Start</label></div>
                                 <div class="li-value"><input type="text" id="start-date-picker" class="date-time-field" name="begin" placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
                             </li>
                             <li>
-                                <div class="li-key"><label class="required-field" for="end" title="Latest time to display.">End</label></div>
+                                <div class="li-key"><label class="required-field" for="end-date-picker" title="Latest time to display.">End</label></div>
                                 <div class="li-value"><input type="text" id="end-date-picker" class="date-time-field" name="end" placeholder="yyyy-mm-dd HH:mm:ss.S"/></div>
                             </li>
                         </ul>
                         <ul class="key-value-list">
                             <li>
-                                <div class="li-key"><label class="required-field" for="locations" title="Include on the following locations.">Zone</label></div>
+                                <div class="li-key"><label class="required-field" for="location-selector" title="Include on the following locations.">Zone</label></div>
                                 <div class="li-value">
                                     <select id="location-selector" name="location" multiple>
                                         <option value="" label="" hidden></option>
                                         <c:forEach var="location" items="${requestScope.locationMap}">
-                                            <option value="${location.key}" label="${location.key}" <c:if test="${location.value}">selected</c:if>>${location.key}</option>
+                                            <option value="<c:out value="${location.key}"/>" label="${location.key}" <c:if test="${location.value}">selected</c:if>><c:out value="${location.key}"/></option>
                                         </c:forEach>
                                     </select>
                                 </div>
@@ -207,12 +207,12 @@
                         <c:if test="${requestScope.classificationMap.size() > 0}">
                             <ul class="key-value-list">
                                 <li>
-                                    <div class="li-key"><label for="classification" title="Include only events with the following classification(s).  Empty implies no filter">Classification</label></div>
+                                    <div class="li-key"><label for="classification-selector" title="Include only events with the following classification(s).  Empty implies no filter">Classification</label></div>
                                     <div class="li-value">
                                         <select id="classification-selector" name="classification" multiple>
                                             <option value="" label="" hidden></option>
                                             <c:forEach var="cls" items="${requestScope.classificationMap}">
-                                                <option value="${cls.key}" label="${cls.key}" <c:if test="${cls.value}">selected</c:if>>${cls.key}</option>
+                                                <option value="<c:out value="${cls.key}"/>" label="<c:out value="${cls.key}"/>" <c:if test="${cls.value}">selected</c:if>><c:out value="${cls.key}"/></option>
                                             </c:forEach>
                                         </select>
                                     </div>
@@ -223,9 +223,9 @@
                             <c:when test="${requestScope.system == 'rf'}">
                                 <ul class="key-value-list">
                                     <li>
-                                        <div class="li-key"><label for="minCF" title="Include events with data for at least this many cavities. Empty implies no filter.">Min #Cavities</label></div>
+                                        <div class="li-key"><label for="minCF-input" title="Include events with data for at least this many cavities. Empty implies no filter.">Min #Cavities</label></div>
                                         <div class="li-value">
-                                            <input type="text" name="minCF" value="${requestScope.minCF}">
+                                            <input id="minCF-input" type="text" name="minCF" value="<c:out value="${requestScope.minCF}"/>">
                                         </div>
                                     </li>
                                 </ul>
@@ -236,12 +236,12 @@
                         <legend>Graph</legend>
                         <ul class="key-value-list">
                             <li>
-                                <div class="li-key"><label for="series" title="Show charts for these series below.">Series</label></div>
+                                <div class="li-key"><label for="series-selector" title="Show charts for these series below.">Series</label></div>
                                 <div class="li-value">
                                     <select id="series-selector" name="series" multiple>
                                         <option value="" label="" hidden></option>
                                         <c:forEach var="series" items="${requestScope.seriesMap}">
-                                            <option value="${series.key}" label="${series.key}" <c:if test="${series.value}">selected</c:if>>${series.key}</option>
+                                            <option value="<c:out value="${series.key}"/>" label="<c:out value="${series.key}"/>" <c:if test="${series.value}">selected</c:if>><c:out value="${series.key}"/></option>
                                         </c:forEach>
                                     </select>
                                 </div>
@@ -249,18 +249,18 @@
                         </ul>
                         <ul class="key-value-list">
                             <li>
-                                <div class="li-key"><label for="series-sets" title="Show charts for these named sets of series below.">Series Sets</label></div>
+                                <div class="li-key"><label for="series-set-selector" title="Show charts for these named sets of series below.">Series Sets</label></div>
                                 <div class="li-value">
                                     <select id="series-set-selector" name="seriesSet" multiple>
                                         <option value="" label="" hidden></option>
                                         <c:forEach var="seriesSet" items="${requestScope.seriesSetMap}">
-                                            <option value="${seriesSet.key}" label="${seriesSet.key}" <c:if test="${seriesSet.value}">selected</c:if>>${seriesSet.key}</option>
+                                            <option value="<c:out value="${seriesSet.key}"/>" label="<c:out value="${seriesSet.key}"/>" <c:if test="${seriesSet.value}">selected</c:if>><c:out value="${seriesSet.key}"/></option>
                                         </c:forEach>
                                     </select>
                                 </div>
                             </li>
                         </ul>
-                    <input type="hidden" id="event-id-input" name="eventId" value="${eventId}"/>
+                    <input type="hidden" id="event-id-input" name="eventId" value="<c:out value="${eventId}"/>"/>
                     </fieldset>
                     <input id="page-controls-submit" type="submit" value="Submit"/><span id="page-controls-error"></span>
                 </fieldset>
@@ -272,23 +272,23 @@
         <script>
             var jlab = jlab || {};
             jlab.wfb = jlab.wfb || {};
-            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'${location}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-            jlab.wfb.locationToGroupMap = new Map([<c:forEach var="index" begin="0" end="${fn:length(locationSelections)-1}">['${locationSelections.get(index)}', '${index}']<c:if test="${index != (fn:length(locationSelections)-1)}">,</c:if></c:forEach>]);
-            jlab.wfb.begin = "${requestScope.begin}";
-            jlab.wfb.end = "${requestScope.end}";
-            jlab.wfb.system = "${requestScope.system}";
+            jlab.wfb.locationSelections = [<c:forEach var="location" items="${locationSelections}" varStatus="status">'<c:out value="${location}"/>'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.locationToGroupMap = new Map([<c:forEach var="index" begin="0" end="${fn:length(locationSelections)-1}">['<c:out value="${locationSelections.get(index)}"/>', '${index}']<c:if test="${index != (fn:length(locationSelections)-1)}">,</c:if></c:forEach>]);
+            jlab.wfb.begin = "<c:out value="${requestScope.begin}"/>";
+            jlab.wfb.end = "<c:out value="${requestScope.end}"/>";
+            jlab.wfb.system = "<c:out value="${requestScope.system}"/>";
             jlab.wfb.eventArray = ${requestScope.eventListJson};
             jlab.wfb.eventArray = jlab.wfb.eventArray.events;
-            jlab.wfb.minCF = "${requestScope.minCF}";
+            jlab.wfb.minCF = "<c:out value="${requestScope.minCF}"/>";
             jlab.wfb.currentEvent = ${requestScope.currentEvent} || {};
-            jlab.wfb.seriesSelections = [<c:forEach var="series" items="${seriesSelections}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-            jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'${seriesSet}'<c:if test="${!status.last}">,</c:if></c:forEach>];
-            jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'${series}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.seriesSelections = [<c:forEach var="series" items="${seriesSelections}" varStatus="status">'<c:out value="${series}"/>'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.seriesSetSelections = [<c:forEach var="seriesSet" items="${seriesSetSelections}" varStatus="status">'<c:out value="${seriesSet}"/>'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.seriesMasterSet = [<c:forEach var="series" items="${seriesMasterSet}" varStatus="status">'<c:out value="${series}"/>'<c:if test="${!status.last}">,</c:if></c:forEach>];
 
-            jlab.wfb.classificationSelections = [<c:forEach var="classification" items="${classificationSelections}" varStatus="status">'${classification}'<c:if test="${!status.last}">,</c:if></c:forEach>];
+            jlab.wfb.classificationSelections = [<c:forEach var="classification" items="${classificationSelections}" varStatus="status">'<c:out value="${classification}"/>'<c:if test="${!status.last}">,</c:if></c:forEach>];
             jlab.wfb.classificationMap = new Map();
             <c:forEach var="classification" items="${requestScope.classificationMap}">
-                jlab.wfb.classificationMap.set("${classification.key}", ${classification.value});
+                jlab.wfb.classificationMap.set("<c:out value="${classification.key}"/>", <c:out value="${classification.value}"/>);
             </c:forEach>
 
             // Attach an event listener to make the system selector update the graph settings.
