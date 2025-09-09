@@ -980,8 +980,10 @@ public class Event implements Comparable<Event> {
         String label;
         switch (system) {
             case "rf":
-            case "bpm":
                 label = waveformName.substring(0, 4);
+                break;
+            case "bpm":
+                label = waveformName.substring(3, 7);
                 break;
             case "acclrm":
                 label = waveformName.substring(7, 10);
@@ -1018,7 +1020,7 @@ public class Event implements Comparable<Event> {
                 // etc.).  An easy hashing algorithm is convert the zone to UTF_8 and get it's binary representation.
                 // Then convert each character to its decimal equivalent, but treat the whole string as though it were
                 // a base 256 number during the conversion.  This avoids collisions since there is a one-to-one mapping.
-                byte[] bytes =waveformName.substring(0, 4).getBytes(StandardCharsets.UTF_8);
+                byte[] bytes =waveformName.substring(3, 7).getBytes(StandardCharsets.UTF_8);
                 id = 0;
                 for (int i = 0; i < bytes.length; i++) {
                     int val = bytes[i];
