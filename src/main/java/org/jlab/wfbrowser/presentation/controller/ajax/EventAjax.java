@@ -106,6 +106,7 @@ public class EventAjax extends HttpServlet {
 
             // Setup the query by the SeriesSets by names
             SeriesService ss = new SeriesService();
+            // TODO: should system name be added here?
             SeriesSetFilter sFilter = new SeriesSetFilter(null, null, seriesSetList);
             try {
                 // For each SeriesSet return, add the names of it's contained series to the master set
