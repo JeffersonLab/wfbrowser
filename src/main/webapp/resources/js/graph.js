@@ -560,6 +560,10 @@ jlab.wfb.loadNewGraphs = (function () {
             $graphPanel.css({opacity: 0.5});
 
             // Update the global current event and local tracker of the currentEvent
+            let prevEventId = currEventId;
+            if (prevEventId === null) {
+                prevEventId = jlab.wfb.currentEvent.id;
+            }
             currEventId = eventId;
 
             // Make sure the jlab.wfb.timeline matches the current event
@@ -583,7 +587,6 @@ jlab.wfb.loadNewGraphs = (function () {
 
             promise.fail(function (xhr, textStatus) {
                 var json;
-
                 try {
                     json = $.parseJSON(xhr.responseText);
                 } catch (err) {
@@ -591,12 +594,13 @@ jlab.wfb.loadNewGraphs = (function () {
                     json = {};
                 }
 
+                // Show the user an error message
                 var message = json.error || 'Server did not handle request';
-                if(quiet) {
-                    window.console && console.log('Unable to perform request: ' + message);
-                } else {
-                    alert('Unable to perform request: ' + message);
-                }
+                alert('Unable to perform request: ' + message);
+
+                // Roll back to the previously selected event
+                currEventId = prevEventId;
+                jlab.wfb.timeline.setSelection(currEventId);
             });
 
             promise.done(function (json) {
@@ -620,23 +624,18 @@ jlab.wfb.loadNewGraphs = (function () {
                 }
                 // Clear out the graph panel, set the graph panel back to opaque
                 $graphPanel.empty();
-                $graphPanel.css({opacity: 1});
 
                 // Make and display the graphs. Save them to the local array so we can delete them on the next update
                 graphs = jlab.wfb.makeGraphs(jlab.wfb.currentEvent, $graphPanel, jlab.wfb.seriesMasterSet);
 
-                // Make sure the URL bar and UI controls reflect any changes.
-                jlab.wfb.updateBrowserUrlAndControls();
-
                 // Scroll the screen back to the same position
                 window.scrollTo(xOffset, yOffset);
             });
-            promise.fail(function () {
-                // jlab.doAjaxJsonGetRequest handles the generic error logic.  We just need to make sure that the timeline is accurate.
-                jlab.wfb.timeline.setSelection(currEventId);
-            });
             promise.always(function () {
+                $graphPanel.css({opacity: 1});
                 updateInProgress = false;
+                // Make sure the URL bar and UI controls reflect any changes.
+                jlab.wfb.updateBrowserUrlAndControls();
             });
         }
     };
