@@ -5,14 +5,13 @@
  */
 package org.jlab.wfbrowser.model;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 
 /**
- * ;
  * Simple object for representing a named set of waveform data series lookup
  * information.
  *
@@ -20,25 +19,25 @@ import javax.json.JsonObject;
  */
 public class SeriesSet {
 
-    private final Set<Series> set;
+    private final List<Series> list;
     private final String name;
     private final int id;
     private final String systemName;
     private final String description;
 
-    public SeriesSet(Set<Series> set, String name, int id, String systemName, String description) {
-        if (set == null) {
-            throw new RuntimeException("set cannot be null");
+    public SeriesSet(List<Series> list, String name, int id, String systemName, String description) {
+        if (list == null) {
+            throw new RuntimeException("list cannot be null");
         }
-        this.set = set;
+        this.list = list;
         this.name = name;
         this.id = id;
         this.systemName = systemName;
         this.description = description;
     }
 
-    public Set<Series> getSet() {
-        return set;
+    public List<Series> getList() {
+        return list;
     }
 
     public String getName() {
@@ -53,8 +52,8 @@ public class SeriesSet {
         return id;
     }
 
-    public boolean addSeries(Series series) {
-        return set.add(series);
+    public void addSeries(Series series) {
+        list.add(series);
     }
 
     public String getDescription() {
@@ -63,7 +62,7 @@ public class SeriesSet {
 
     public JsonObject toJsonObject() {
         JsonArrayBuilder jab = Json.createArrayBuilder();
-        for (Series s : set) {
+        for (Series s : list) {
             jab.add(s.toJsonObject());
         }
         return Json.createObjectBuilder()
@@ -88,10 +87,10 @@ public class SeriesSet {
         if (!description.equals(s.description)) { return false; }
 
         // Compare the series each one contains.
-        if (set.size() != s.set.size()) { return false; }
-        for (Series series : set) {
+        if (list.size() != s.list.size()) { return false; }
+        for (Series series : list) {
             boolean foundIt = false;
-            for (Series oSeries : s.set) {
+            for (Series oSeries : s.list) {
                 if (series.equals(oSeries)) {
                     foundIt = true;
                     break;
@@ -105,6 +104,6 @@ public class SeriesSet {
 
     @Override
     public int hashCode() {
-        return Objects.hash(set, name, id, systemName, description);
+        return Objects.hash(list, name, id, systemName, description);
     }
 }

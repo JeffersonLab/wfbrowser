@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -326,7 +325,7 @@ public class SeriesService {
                 String setName = rs.getString("set_name");
                 String systemName = rs.getString("system_name");
                 String description = rs.getString("description");
-                ss.add(new SeriesSet(new HashSet<Series>(), setName, setId, systemName, description));
+                ss.add(new SeriesSet(new ArrayList<Series>(), setName, setId, systemName, description));
             }
 
             pstmt.close();
@@ -357,12 +356,12 @@ public class SeriesService {
         return ss;
     }
 
-    public void addSeriesSet(String name, String system, String description, Set<Series> set) throws SQLException {
+    public void addSeriesSet(String name, String system, String description, List<Series> seriesList) throws SQLException {
         SystemService ss = new SystemService();
         int systemId = ss.getSystemId(system);
 
         String setSql = "INSERT INTO series_sets (system_id, set_name, description) VALUES (?, ?, ?)";
-        String seriesSql = "INSERT INTO series_set_contents (set_id, series_id) VALUES (?,?)";
+        String seriesSql = "INSERT INTO series_set_contents (set_id, series_id) VALUES (?, ?)";
 
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -390,7 +389,7 @@ public class SeriesService {
             }
 
             pstmt = conn.prepareStatement(seriesSql);
-            for (Series series : set) {
+            for (Series series : seriesList) {
                 pstmt.setLong(1, setId);
                 pstmt.setInt(2, series.getId());
                 pstmt.execute();

@@ -134,7 +134,7 @@ public class SeriesSetsAjax extends HttpServlet {
         // set should have to be not null to make it through error checking above
         List<String> nameList = Arrays.asList(set.split(","));
 
-        Set<Series> seriesSet = new HashSet<>();
+        List<Series> seriesSet = new ArrayList<>();
         SeriesService ss = new SeriesService();
         //Lookup the specified series by name, then create a set of them
         try {

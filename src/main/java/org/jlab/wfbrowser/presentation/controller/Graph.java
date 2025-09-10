@@ -97,10 +97,10 @@ public class Graph extends HttpServlet {
 
         // Process selections compared with their viable options.  Still contains default values at this point.
         List<Series> seriesOptions = graphConfig.getSeriesOptions();
-        Set<Series> seriesSelections = initializeSeriesSelections(serSel, seriesOptions);
+        List<Series> seriesSelections = initializeSeriesSelections(serSel, seriesOptions);
 
         List<SeriesSet> seriesSetOptions = graphConfig.getSeriesSetOptions();
-        Set<SeriesSet> seriesSetSelections = initializeSeriesSetSelections(serSetSel, seriesSetOptions);
+        List<SeriesSet> seriesSetSelections = initializeSeriesSetSelections(serSetSel, seriesSetOptions);
 
         List<String> locationOptions = graphConfig.getLocationOptions();
         Set<String> locationSelections = GraphConfig.keepOnlyMatches(locSel, locationOptions);
@@ -126,7 +126,7 @@ public class Graph extends HttpServlet {
         Map<String, Boolean> classificationMap = new TreeMap<>();
         Map<String, Boolean> seriesMap = new TreeMap<>();
         Map<String, Boolean> seriesSetMap = new TreeMap<>();
-        Set<String> seriesMasterSet = new HashSet<>();
+        List<String> seriesMasterSet = new ArrayList<>();
         List<Event> eventList;
         Event currentEvent = null;
 
@@ -380,15 +380,15 @@ public class Graph extends HttpServlet {
     }
 
 
-    private Set<Series> initializeSeriesSelections(String[] serSel, List<Series> seriesOptions) {
+    private List<Series> initializeSeriesSelections(String[] serSel, List<Series> seriesOptions) {
         // Get the series selections if any were made.  Keep only the valid ones.
-        Set<Series> seriesSelections = null;
+        List<Series> seriesSelections = null;
         if (serSel != null && serSel.length > 0) {
             for (String seriesName : serSel) {
                 for (Series s : seriesOptions) {
                     if (seriesName.equals(s.getName())) {
                         if (seriesSelections == null) {
-                            seriesSelections = new HashSet<>();
+                            seriesSelections = new ArrayList<>();
                         }
                         seriesSelections.add(s);
                     }
@@ -398,14 +398,14 @@ public class Graph extends HttpServlet {
         return seriesSelections;
     }
 
-    private Set<SeriesSet> initializeSeriesSetSelections(String[] serSetSel, List<SeriesSet> seriesSetOptions) {
-        Set<SeriesSet> seriesSetSelections = null;
+    private List<SeriesSet> initializeSeriesSetSelections(String[] serSetSel, List<SeriesSet> seriesSetOptions) {
+        List<SeriesSet> seriesSetSelections = null;
         if (serSetSel != null && serSetSel.length > 0) {
             for (String setName : serSetSel) {
                 for (SeriesSet s : seriesSetOptions) {
                     if (setName.equals(s.getName())) {
                         if (seriesSetSelections == null) {
-                            seriesSetSelections = new HashSet<>();
+                            seriesSetSelections = new ArrayList<>();
                         }
                         seriesSetSelections.add(s);
                     }
@@ -417,8 +417,8 @@ public class Graph extends HttpServlet {
 
     private void doRedirect(HttpServletRequest request, HttpServletResponse response, Long eId, String system,
                             String beginString, String endString, Set<String> locationSelections,
-                            Set<String> classificationSelections, Set<Series> seriesSelections,
-                            Set<SeriesSet> seriesSetSelections, Integer minCaptureFiles) throws IOException {
+                            Set<String> classificationSelections, List<Series> seriesSelections,
+                            List<SeriesSet> seriesSetSelections, Integer minCaptureFiles) throws IOException {
         StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/graph?"
                 + "eventId=" + URLEncoder.encode((eId == null ? "" : "" + eId), StandardCharsets.UTF_8)
                 + "&system=" + URLEncoder.encode(system, StandardCharsets.UTF_8)
