@@ -81,8 +81,19 @@ public class GraphConfig {
 
         // For RF, we want the GDR Trip view as default.  Otherwise, do something acceptable if it's not there.
         for (SeriesSet sSet : seriesSetOptions) {
-            if (sSet.getName().equals("GDR Trip")) {
-                seriesSets.add(sSet);
+            if (systemName != null) {
+                switch (systemName) {
+                    case "rf":
+                        if (sSet.getName().equals("GDR Trip")) {
+                            seriesSets.add(sSet);
+                        }
+                        break;
+                    case "bpm":
+                        if (sSet.getName().equals("BPM Summary")) {
+                            seriesSets.add(sSet);
+                        }
+                        break;
+                }
             }
         }
         if (seriesSets.isEmpty()) {
