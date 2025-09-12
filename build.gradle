@@ -4,9 +4,9 @@ plugins {
 
 description "Waveform Viewer and Browsing App for CEBAF"
 group 'org.jlab'
-version '2.2.1'
-ext.releaseDate = 'Oct 16, 2024'
-ext.resourceNumber = '42'
+version '2.3.0'
+ext.releaseDate = 'Sep 12, 2025'
+ext.resourceNumber = '43'
 ext.adminRole = 'wfb_admin'
 ext.postRole = 'wfb_data'
 
