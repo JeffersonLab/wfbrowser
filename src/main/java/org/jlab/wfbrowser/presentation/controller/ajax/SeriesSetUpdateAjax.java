@@ -8,11 +8,7 @@ package org.jlab.wfbrowser.presentation.controller.ajax;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -82,7 +78,11 @@ public class SeriesSetUpdateAjax extends HttpServlet {
         try {
             List<String> requestSeries = Arrays.asList(set.split(","));
             SeriesFilter filter = new SeriesFilter(requestSeries, "rf", null);
-            Set<Series> seriesSet = new HashSet<>(ss.getSeries(filter));
+            // Use a LinkedHashSet to preserve the order of the series given in the UI.
+            Set<Series> seriesSet = new LinkedHashSet<>();
+            for (Series s : ss.getSeries(filter)) {
+                seriesSet.add(s);
+            }
             
             // Check that the database returned the same number of series as the user wanted to have in the update.
             // It could be that the user entered in a series name that doesn't exist or that they included a name twice.
