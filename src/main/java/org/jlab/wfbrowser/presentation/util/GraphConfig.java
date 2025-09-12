@@ -539,6 +539,10 @@ public class GraphConfig {
             seriesSetOptions = other.seriesSetOptions;
             update = true;
         }
+        if (other.seriesMasterSet != null && !Objects.equals(seriesMasterSet, other.seriesMasterSet)) {
+            seriesMasterSet = other.seriesMasterSet;
+            update = true;
+        }
 
         return update;
     }
