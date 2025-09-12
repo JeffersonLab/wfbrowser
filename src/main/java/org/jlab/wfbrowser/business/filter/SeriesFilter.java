@@ -20,6 +20,10 @@ public class SeriesFilter {
     private final String system;
     private final List<Integer> idList;
 
+    public List<String> getNameList() {
+        return nameList;
+    }
+
     public SeriesFilter(List<String> nameList, String system, List<Integer> idList) {
         this.nameList = nameList;
         this.system = system;

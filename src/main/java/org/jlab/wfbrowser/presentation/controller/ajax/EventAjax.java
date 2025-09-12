@@ -98,11 +98,11 @@ public class EventAjax extends HttpServlet {
 
         // The Event objects can filter the data the return based on a Set of series names.  Since we take Series and SeriesSet
         // names as parameters to this endpoint, we need to combine them into a single set of Series names, i.e., a master set
-        Set<String> seriesMasterSet = null;
+        List<String> seriesMasterSet = null;
 
         // Add any series from the seriesSets.
         if (seriesSetList != null) {
-            seriesMasterSet = new TreeSet<>();
+            seriesMasterSet = new ArrayList<>();
 
             // Setup the query by the SeriesSets by names
             SeriesService ss = new SeriesService();
@@ -112,7 +112,7 @@ public class EventAjax extends HttpServlet {
                 // For each SeriesSet return, add the names of it's contained series to the master set
                 List<SeriesSet> seriesSets = ss.getSeriesSets(sFilter);
                 for (SeriesSet set : seriesSets) {
-                    for (Series series : set.getSet()) {
+                    for (Series series : set.getList()) {
                         seriesMasterSet.add(series.getName()); // Not null
                     }
                 }
@@ -127,7 +127,7 @@ public class EventAjax extends HttpServlet {
         }
         if (seriesList != null) {
             if (seriesMasterSet == null) {
-                seriesMasterSet = new TreeSet<>();
+                seriesMasterSet = new ArrayList<>();
             }
             seriesMasterSet.addAll(seriesList);
         }

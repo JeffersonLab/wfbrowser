@@ -30,11 +30,11 @@ public class GraphConfig {
     private List<String> locationOptions;
     private Set<String> classifications;
     private List<String> classificationOptions;
-    private Set<Series> series;
+    private List<Series> series;
     private List<Series> seriesOptions;
-    private Set<SeriesSet> seriesSets;
+    private List<SeriesSet> seriesSets;
     private List<SeriesSet> seriesSetOptions;
-    private Set<Series> seriesMasterSet;
+    private List<Series> seriesMasterSet;
     private Integer minCaptureFiles;
     private Long eventId;
     private Instant begin;
@@ -50,9 +50,9 @@ public class GraphConfig {
     public static GraphConfig getDefaultConfig(String systemName) throws IOException {
 
         String system = systemName == null ? "rf" : systemName;
-        Set<Series> series = new HashSet<>();
+        List<Series> series = new ArrayList<>();
         List<Series> seriesOptions;
-        Set<SeriesSet> seriesSets = new HashSet<>();
+        List<SeriesSet> seriesSets = new ArrayList<>();
         List<SeriesSet> seriesSetOptions;
         Set<String> locations;
         List<String> locationOptions;
@@ -81,8 +81,19 @@ public class GraphConfig {
 
         // For RF, we want the GDR Trip view as default.  Otherwise, do something acceptable if it's not there.
         for (SeriesSet sSet : seriesSetOptions) {
-            if (sSet.getName().equals("GDR Trip")) {
-                seriesSets.add(sSet);
+            if (systemName != null) {
+                switch (systemName) {
+                    case "rf":
+                        if (sSet.getName().equals("GDR Trip")) {
+                            seriesSets.add(sSet);
+                        }
+                        break;
+                    case "bpm":
+                        if (sSet.getName().equals("BPM Summary")) {
+                            seriesSets.add(sSet);
+                        }
+                        break;
+                }
             }
         }
         if (seriesSets.isEmpty()) {
@@ -180,8 +191,8 @@ public class GraphConfig {
 
     public GraphConfig(String system, Set<String> locations, Set<String> classifications, Integer minCaptureFiles,
                        Long eventId, Instant begin, Instant end, List<String> classificationOptions,
-                       List<String> locationOptions, Set<Series> series, List<Series> seriesOptions,
-                       Set<SeriesSet> seriesSets, List<SeriesSet> seriesSetOptions) {
+                       List<String> locationOptions, List<Series> series, List<Series> seriesOptions,
+                       List<SeriesSet> seriesSets, List<SeriesSet> seriesSetOptions) {
         if (system == null) {
             this.system = "rf";
         } else {
@@ -224,7 +235,7 @@ public class GraphConfig {
         return end;
     }
 
-    public Set<Series> getSeries() {
+    public List<Series> getSeries() {
         return series;
     }
 
@@ -232,7 +243,7 @@ public class GraphConfig {
         return system;
     }
 
-    public Set<Series> getSeriesMasterSet() {
+    public List<Series> getSeriesMasterSet() {
         return seriesMasterSet;
     }
 
@@ -244,7 +255,7 @@ public class GraphConfig {
         this.eventId = eventId;
     }
 
-    public Set<SeriesSet> getSeriesSets() {
+    public List<SeriesSet> getSeriesSets() {
         return seriesSets;
     }
 
@@ -298,8 +309,8 @@ public class GraphConfig {
      */
     public GraphConfig(String system, Set<String> locations, Set<String> classifications, Integer minCaptureFiles,
                        Long eventId, String begin, String end, List<String> classificationOptions,
-                       List<String> locationOptions, Set<Series> series, List<Series> seriesOptions,
-                       Set<SeriesSet> seriesSets, List<SeriesSet> seriesSetOptions) {
+                       List<String> locationOptions, List<Series> series, List<Series> seriesOptions,
+                       List<SeriesSet> seriesSets, List<SeriesSet> seriesSetOptions) {
         if (system == null) {
             this.system = "rf";
         } else {
@@ -334,14 +345,22 @@ public class GraphConfig {
         if (this.seriesMasterSet != null) {
             this.seriesMasterSet.clear();
         } else {
-            this.seriesMasterSet = new HashSet<>();
+            this.seriesMasterSet = new ArrayList<>();
         }
         if (this.series != null) {
-            this.seriesMasterSet.addAll(this.series);
+            for (Series s : series) {
+                if (!this.seriesMasterSet.contains(s)) {
+                    this.seriesMasterSet.add(s);
+                }
+            }
         }
         if (this.seriesSets != null) {
             for (SeriesSet ss : this.seriesSets) {
-                this.seriesMasterSet.addAll(ss.getSet());
+                for (Series s : ss.getList()) {
+                    if (!this.seriesMasterSet.contains(s)) {
+                        this.seriesMasterSet.add(s);
+                    }
+                }
             }
         }
     }
@@ -529,6 +548,10 @@ public class GraphConfig {
         }
         if (other.seriesSetOptions != null && !Objects.equals(seriesSetOptions, other.seriesSetOptions)) {
             seriesSetOptions = other.seriesSetOptions;
+            update = true;
+        }
+        if (other.seriesMasterSet != null && !Objects.equals(seriesMasterSet, other.seriesMasterSet)) {
+            seriesMasterSet = other.seriesMasterSet;
             update = true;
         }
 

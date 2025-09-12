@@ -5,7 +5,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class GraphConfigTest {
@@ -14,14 +16,14 @@ public class GraphConfigTest {
         Set<String> loc1 = new HashSet<>();
         loc1.add("a");
         loc1.add("b");
-        Set<Series> s1 = new HashSet<>();
+        List<Series> s1 = new ArrayList<>();
         s1.add(new Series("ser1", 1, "", "system1", "", "NA", null, null));
         GraphConfig gc1 = new GraphConfig("system1", loc1, null, 3, null,
                 (String) null, null, null, null, s1, null,
                 null, null);
 
         Set<String> c2 = new HashSet<>();
-        Set<Series> s2 = new HashSet<>();
+        List<Series> s2 = new ArrayList<>();
         s2.add(new Series("ser2", 2, "", "system1", "asdfasdfasdfasdfasdf", "NA", null, null));
         c2.add("cc1");
         c2.add("cc2");

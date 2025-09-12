@@ -30,7 +30,7 @@
                             <tr data-series-set-id="${seriesSet.id}">
                                 <td ><c:out value="${seriesSet.name}"/></td>
                                 <td><c:out value="${seriesSet.description}"/></td>
-                                <td><c:forEach var="series" items="${seriesSet.set}" varStatus="status">${series.name}<c:if test="${!status.last}">,</c:if></c:forEach></td>
+                                <td><c:forEach var="series" items="${seriesSet.list}" varStatus="status">${series.name}<c:if test="${!status.last}">,</c:if></c:forEach></td>
                                 <td><c:out value="${seriesSet.systemName}"/>
                             </tr>
                         </c:forEach>

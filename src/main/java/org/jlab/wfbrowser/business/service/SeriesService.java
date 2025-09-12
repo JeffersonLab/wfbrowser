@@ -10,10 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jlab.wfbrowser.business.filter.SeriesFilter;
@@ -31,7 +28,8 @@ public class SeriesService {
     private static final Logger LOGGER = Logger.getLogger(EventService.class.getName());
 
     public List<Series> getSeries(SeriesFilter filter) throws SQLException {
-        List<Series> seriesList = new ArrayList<>();
+        // Use LinkedHashMap so that the default order of output series based on the SQL query.
+        Map<String, Series> seriesMap = new LinkedHashMap<>();
 
         String sql = "SELECT series_id, system_name, pattern, series_name, description, units, ymin, ymax"
                 + " FROM series"
@@ -64,10 +62,21 @@ public class SeriesService {
                 yMin = rs.wasNull() ? null : yMin;
                 yMax = rs.getDouble("ymax");
                 yMax = rs.wasNull() ? null : yMax;
-                seriesList.add(new Series(name, id, pattern, system, description, units, yMin, yMax));
+                seriesMap.put(name, new Series(name, id, pattern, system, description, units, yMin, yMax));
             }
         } finally {
             SqlUtil.close(rs, pstmt, conn);
+        }
+
+        // This keeps the request order the same and is important for allowing the admin to control the order of graphs
+        // displayed in the UI.
+        List<Series> seriesList = new ArrayList<>();
+        if (filter.getNameList() != null) {
+            for (String name : filter.getNameList()) {
+                seriesList.add(seriesMap.get(name));
+            }
+        } else {
+            seriesList.addAll(seriesMap.values());
         }
 
         return seriesList;
@@ -326,7 +335,7 @@ public class SeriesService {
                 String setName = rs.getString("set_name");
                 String systemName = rs.getString("system_name");
                 String description = rs.getString("description");
-                ss.add(new SeriesSet(new HashSet<Series>(), setName, setId, systemName, description));
+                ss.add(new SeriesSet(new ArrayList<Series>(), setName, setId, systemName, description));
             }
 
             pstmt.close();
@@ -357,12 +366,12 @@ public class SeriesService {
         return ss;
     }
 
-    public void addSeriesSet(String name, String system, String description, Set<Series> set) throws SQLException {
+    public void addSeriesSet(String name, String system, String description, List<Series> seriesList) throws SQLException {
         SystemService ss = new SystemService();
         int systemId = ss.getSystemId(system);
 
         String setSql = "INSERT INTO series_sets (system_id, set_name, description) VALUES (?, ?, ?)";
-        String seriesSql = "INSERT INTO series_set_contents (set_id, series_id) VALUES (?,?)";
+        String seriesSql = "INSERT INTO series_set_contents (set_id, series_id) VALUES (?, ?)";
 
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -390,7 +399,7 @@ public class SeriesService {
             }
 
             pstmt = conn.prepareStatement(seriesSql);
-            for (Series series : set) {
+            for (Series series : seriesList) {
                 pstmt.setLong(1, setId);
                 pstmt.setInt(2, series.getId());
                 pstmt.execute();

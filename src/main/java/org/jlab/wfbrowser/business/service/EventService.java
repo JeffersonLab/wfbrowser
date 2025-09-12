@@ -1069,7 +1069,7 @@ public class EventService {
      * @param seriesMasterSet A Set of Strings describing which serires are to be included.
      * @return A JSON object
      */
-    static public JsonObject convertEventListToJson(List<Event> eventList, Set<String> seriesMasterSet) {
+    static public JsonObject convertEventListToJson(List<Event> eventList, List<String> seriesMasterSet) {
         JsonObjectBuilder job = Json.createObjectBuilder();
         JsonArrayBuilder jab = Json.createArrayBuilder();
         for (Event e : eventList) {

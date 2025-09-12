@@ -628,11 +628,16 @@ public class Event implements Comparable<Event> {
      * database event_id value, since it doesn't make any sense to hand out
      * "unofficial" data through one of our data API end points.
      *
-     * @param seriesSet If not null, only include waveforms who's listed
+     * @param seriesList If not null, only include waveforms who's listed
      *                  seriesNames includes at least of the series in the list.
      * @return A JSON representation of this Event with possibly some waveform data filtered out.
      */
-    public JsonObject toJsonObject(Set<String> seriesSet) {
+    public JsonObject toJsonObject(List<String> seriesList) {
+        // Down stream code expects to not have duplicates.  Converting to Set ensures that.
+        Set<String> seriesSet = null;
+        if (seriesList != null) {
+            seriesSet = new HashSet<>(seriesList);
+        }
         JsonObjectBuilder job = Json.createObjectBuilder();
         if (eventId != null) {
             job.add("id", eventId)
@@ -813,11 +818,15 @@ public class Event implements Comparable<Event> {
     /**
      * Generate the contents of a CSV file that represents the waveform event
      *
-     * @param seriesSet A set of the named series that should be included
+     * @param seriesList A list of the named series that should be included
      * @return A string representation of a CSV file representing the waveform
      * event.
      */
-    public String toCsv(Set<String> seriesSet) {
+    public String toCsv(List<String> seriesList) {
+        Set<String> seriesSet = null;
+        if (seriesList != null) {
+            seriesSet = new HashSet<>(seriesList);
+        }
         double[][] csvData = getWaveformDataAsArray(seriesSet);
         List<String> headers = new ArrayList<>();
         headers.add("time_offset");
@@ -851,11 +860,16 @@ public class Event implements Comparable<Event> {
      * Generate a json object in a way that makes it easy to pass to the dygraph
      * widgets
      *
-     * @param seriesSet A set of series names that should be included in the
+     * @param seriesList A list of series names that should be included in the
      *                  output
      * @return A JSON representation that is optimized for consumption by dygraphs
      */
-    public JsonObject toDyGraphJsonObject(Set<String> seriesSet) {
+    public JsonObject toDyGraphJsonObject(List<String> seriesList) {
+        // We want no duplicates.  This is an easy way to ensure that
+        Set<String> seriesSet = null;
+        if (seriesList != null) {
+            seriesSet = new HashSet<>(seriesList);
+        }
         JsonBuilderFactory jsonFactory = Json.createBuilderFactory(null);
         JsonObjectBuilder job = jsonFactory.createObjectBuilder();
         List<Waveform> waveforms = getWaveforms();
