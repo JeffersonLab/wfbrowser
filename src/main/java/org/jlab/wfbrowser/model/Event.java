@@ -30,6 +30,8 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
@@ -529,7 +531,7 @@ public class Event implements Comparable<Event> {
      */
     private void loadCaptureFilesFromDisk(List<String> captureFiles, boolean includeData) throws IOException {
         if (!isDataOnDisk(captureFiles)) {
-            LOGGER.log(Level.SEVERE, "Could not locate data on disk");
+            LOGGER.log(Level.SEVERE, "Could not locate data on disk:" + captureFiles);
             throw new FileNotFoundException("Could not locate data on disk");
         }
 
@@ -997,7 +999,14 @@ public class Event implements Comparable<Event> {
                 label = waveformName.substring(0, 4);
                 break;
             case "bpm":
-                label = waveformName.substring(3, 7);
+                String regex = "IPM(\\w+)WFT.*";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(waveformName);
+                if (matcher.find()) {
+                    label = matcher.group(1);
+                } else {
+                    throw new RuntimeException("Unsupported waveform name: " + waveformName);
+                }
                 break;
             case "acclrm":
                 label = waveformName.substring(7, 10);
@@ -1034,7 +1043,9 @@ public class Event implements Comparable<Event> {
                 // etc.).  An easy hashing algorithm is convert the zone to UTF_8 and get it's binary representation.
                 // Then convert each character to its decimal equivalent, but treat the whole string as though it were
                 // a base 256 number during the conversion.  This avoids collisions since there is a one-to-one mapping.
-                byte[] bytes =waveformName.substring(3, 7).getBytes(StandardCharsets.UTF_8);
+                // Names are exactly by zone (seems like there can be <ZONE>, <ZONE>A, and <ZONE>B so the dygraph label)
+                // is the better choice than a simple substring.
+                byte[] bytes = getDygraphLabel(waveformName).getBytes(StandardCharsets.UTF_8);
                 id = 0;
                 for (int i = 0; i < bytes.length; i++) {
                     int val = bytes[i];
