@@ -3,7 +3,7 @@
 A Java EE 8 web application for displaying timeseries data collected at CEBAF. This application is build using
 the [Smoothness](https://github.com/JeffersonLab/smoothness) web template.
 
-![Screenshot](https://github.com/JeffersonLab/wfbrowser/raw/master/screenshot.png?raw=true "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/JeffersonLab/wfbrowser/refs/heads/main/screenshot.png "Screenshot")
 
 ## Overview
 
